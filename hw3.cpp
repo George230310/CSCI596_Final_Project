@@ -24,9 +24,10 @@
   #define strcasecmp _stricmp
 #endif
 
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 
-#include <imageIO.h>
+// #include <imageIO.h>
+#include "png++/png.hpp"
 #include <math.h>
 #include <vector>
 #include <random>
@@ -868,15 +869,29 @@ void plot_pixel(int x, int y, unsigned char r, unsigned char g, unsigned char b)
     plot_pixel_jpeg(x,y,r,g,b);
 }
 
-void save_jpg()
-{
-  printf("Saving JPEG file: %s\n", filename);
+// void save_jpg()
+// {
+//   printf("Saving JPEG file: %s\n", filename);
 
-  ImageIO img(WIDTH, HEIGHT, 3, &buffer[0][0][0]);
-  if (img.save(filename, ImageIO::FORMAT_JPEG) != ImageIO::OK)
-    printf("Error in Saving\n");
-  else 
-    printf("File saved Successfully\n");
+//   ImageIO img(WIDTH, HEIGHT, 3, &buffer[0][0][0]);
+//   if (img.save(filename, ImageIO::FORMAT_JPEG) != ImageIO::OK)
+//     printf("Error in Saving\n");
+//   else 
+//     printf("File saved Successfully\n");
+// }
+
+void save_png()
+{
+    png::image< png::rgb_pixel > image(WIDTH, HEIGHT);
+    for (png::uint_32 y = 0; y < image.get_height(); ++y)
+    {
+        for (png::uint_32 x = 0; x < image.get_width(); ++x)
+        {
+            image[y][x] = png::rgb_pixel(buffer[x][y][0], buffer[x][y][1], buffer[x][y][2]);
+            // non-checking equivalent of image.set_pixel(x, y, ...);
+        }
+    }
+    image.write("rgb.png");
 }
 
 void parse_check(const char *expected, char *found)
@@ -1015,7 +1030,8 @@ void idle()
   {
     draw_scene();
     if(mode == MODE_JPEG)
-      save_jpg();
+      save_png();
+    int random=0;
   }
   once=1;
 }

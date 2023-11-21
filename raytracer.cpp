@@ -4,56 +4,59 @@
  * Name: Leyu Xu
  * *************************
 */
+#include "raytracer.h"
+#include "Sphere.cpp"
+// #ifdef WIN32
+//   #include <windows.h>
+// #endif
 
-#ifdef WIN32
-  #include <windows.h>
-#endif
+// #if defined(WIN32) || defined(linux)
+//   #include <GL/gl.h>
+//   #include <GL/glut.h>
+// #elif defined(__APPLE__)
+//   #include <OpenGL/gl.h>
+//   #include <GLUT/glut.h>
+// #endif
 
-#if defined(WIN32) || defined(linux)
-  #include <GL/gl.h>
-  #include <GL/glut.h>
-#elif defined(__APPLE__)
-  #include <OpenGL/gl.h>
-  #include <GLUT/glut.h>
-#endif
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
+// #ifdef WIN32
+//   #define strcasecmp _stricmp
+// #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifdef WIN32
-  #define strcasecmp _stricmp
-#endif
+// #include "glm/glm.hpp"
 
-#include "glm/glm.hpp"
+// // #include <imageIO.h>
+// #include "png++/png.hpp"
+// #include <math.h>
+// #include <vector>
+// #include <random>
 
-// #include <imageIO.h>
-#include "png++/png.hpp"
-#include <math.h>
-#include <vector>
-#include <random>
+// #define PI 3.14159265
 
-#define PI 3.14159265
-
-#define MAX_TRIANGLES 20000
-#define MAX_SPHERES 100
-#define MAX_LIGHTS 100
+// #define MAX_TRIANGLES 20000
+// #define MAX_SPHERES 100
+// #define MAX_LIGHTS 100
 
 char * filename = NULL;
 
-//different display modes
-#define MODE_DISPLAY 1
-#define MODE_JPEG 2
+// //different display modes
+// #define MODE_DISPLAY 1
+// #define MODE_JPEG 2
 
 int mode = MODE_DISPLAY;
 
-//you may want to make these smaller for debugging purposes
-#define WIDTH 640
-#define HEIGHT 480
+// //you may want to make these smaller for debugging purposes
+// #define WIDTH 640
+// #define HEIGHT 480
 
-//the field of view of the camera
-#define fov 60
+// //the field of view of the camera
+// #define fov 60
 
 unsigned char buffer[HEIGHT][WIDTH][3];
+
+
 
 struct Vertex
 {
@@ -69,14 +72,14 @@ struct Triangle
   Vertex v[3];
 };
 
-struct Sphere
-{
-  double position[3];
-  double color_diffuse[3];
-  double color_specular[3];
-  double shininess;
-  double radius;
-};
+// struct Sphere
+// {
+//   double position[3];
+//   double color_diffuse[3];
+//   double color_specular[3];
+//   double shininess;
+//   double radius;
+// };
 
 struct Light
 {
@@ -84,16 +87,16 @@ struct Light
   double color[3];
 };
 
-struct IntersectData
-{
-    glm::vec3 intersectPoint;
-    glm::vec3 intersectNormal;
+// struct IntersectData
+// {
+//     glm::vec3 intersectPoint;
+//     glm::vec3 intersectNormal;
 
-    glm::vec3 interpolatedDiffuseColor;
-    glm::vec3 interpolatedSpecularColor;
-    float interpolatedShininess = 0.0f;
-    float t = FLT_MAX;
-};
+//     glm::vec3 interpolatedDiffuseColor;
+//     glm::vec3 interpolatedSpecularColor;
+//     float interpolatedShininess = 0.0f;
+//     float t = FLT_MAX;
+// };
 
 Triangle triangles[MAX_TRIANGLES];
 Sphere spheres[MAX_SPHERES];
@@ -115,8 +118,8 @@ void plot_pixel_display(int x,int y,unsigned char r,unsigned char g,unsigned cha
 void plot_pixel_jpeg(int x,int y,unsigned char r,unsigned char g,unsigned char b);
 void plot_pixel(int x,int y,unsigned char r,unsigned char g,unsigned char b);
 
-const float eps = 0.0005f;
-const float eps_accurate = 0.0000001f;
+// const float eps = 0.0005f;
+// const float eps_accurate = 0.0000001f;
 
 // ****************************** PROGRAM PARAMETERS *************************************
 const unsigned int SSAA_Coefficient = 1;
@@ -230,67 +233,67 @@ void generateAllRaysFromCOP()
 }
 
 // function to test ray-sphere intersection, returns true if intersect and provides relevant data
-bool rayIntersectSphere(const glm::vec3& ray_o, const glm::vec3& ray_d, const Sphere& sphere, IntersectData& data)
-{
-    // if the radius of sphere is zero, no intersection
-    if (sphere.radius < eps)
-    {
-        return false;
-    }
+// bool rayIntersectSphere(const glm::vec3& ray_o, const glm::vec3& ray_d, const Sphere& sphere, IntersectData& data)
+// {
+//     // if the radius of sphere is zero, no intersection
+//     if (sphere.radius < eps)
+//     {
+//         return false;
+//     }
 
-    float b = 2.0f * (ray_d.x * (ray_o.x - sphere.position[0]) + ray_d.y * (ray_o.y - sphere.position[1]) + ray_d.z * (ray_o.z - sphere.position[2]));
-    float c = powf(ray_o.x - sphere.position[0], 2.0f) + powf(ray_o.y - sphere.position[1], 2.0f) + powf(ray_o.z - sphere.position[2], 2.0f) - powf(sphere.radius, 2.0f);
+//     float b = 2.0f * (ray_d.x * (ray_o.x - sphere.position[0]) + ray_d.y * (ray_o.y - sphere.position[1]) + ray_d.z * (ray_o.z - sphere.position[2]));
+//     float c = powf(ray_o.x - sphere.position[0], 2.0f) + powf(ray_o.y - sphere.position[1], 2.0f) + powf(ray_o.z - sphere.position[2], 2.0f) - powf(sphere.radius, 2.0f);
 
-    float delta = powf(b, 2.0f) - 4.0f * c;
+//     float delta = powf(b, 2.0f) - 4.0f * c;
 
-    if (delta < 0.0f)
-    {
-        return false;
-    }
+//     if (delta < 0.0f)
+//     {
+//         return false;
+//     }
 
-    float t0 = (-b + sqrtf(delta)) / 2.0f;
-    float t1 = (-b - sqrtf(delta)) / 2.0f;
+//     float t0 = (-b + sqrtf(delta)) / 2.0f;
+//     float t1 = (-b - sqrtf(delta)) / 2.0f;
 
-    // if both t are less or equal to zero, no intersection
-    if (t0 < eps && t1 < eps)
-    {
-        return false;
-    }
+//     // if both t are less or equal to zero, no intersection
+//     if (t0 < eps && t1 < eps)
+//     {
+//         return false;
+//     }
 
-    float t_intersect = 0.0f;
+//     float t_intersect = 0.0f;
 
-    if (t0 < eps)
-    {
-        t_intersect = t1;
-    }
-    else if (t1 < eps)
-    {
-        t_intersect = t0;
-    }
-    else
-    {
-        t_intersect = std::min(t0, t1);
-    }
+//     if (t0 < eps)
+//     {
+//         t_intersect = t1;
+//     }
+//     else if (t1 < eps)
+//     {
+//         t_intersect = t0;
+//     }
+//     else
+//     {
+//         t_intersect = std::min(t0, t1);
+//     }
 
-    // fill out intersection data
-    data.intersectPoint = ray_o + ray_d * t_intersect;
-    glm::vec3 sphereCenter(sphere.position[0], sphere.position[1], sphere.position[2]);
-    data.intersectNormal = (data.intersectPoint - sphereCenter) / (float)sphere.radius;
+//     // fill out intersection data
+//     data.intersectPoint = ray_o + ray_d * t_intersect;
+//     glm::vec3 sphereCenter(sphere.position[0], sphere.position[1], sphere.position[2]);
+//     data.intersectNormal = (data.intersectPoint - sphereCenter) / (float)sphere.radius;
 
-    // negate if ray originates inside the sphere
-    if (glm::length(ray_o - sphereCenter) < (float)sphere.radius)
-    {
-        data.intersectNormal = -data.intersectNormal;
-    }
+//     // negate if ray originates inside the sphere
+//     if (glm::length(ray_o - sphereCenter) < (float)sphere.radius)
+//     {
+//         data.intersectNormal = -data.intersectNormal;
+//     }
 
-    data.t = t_intersect;
+//     data.t = t_intersect;
 
-    data.interpolatedDiffuseColor = glm::vec3(sphere.color_diffuse[0], sphere.color_diffuse[1], sphere.color_diffuse[2]);
-    data.interpolatedSpecularColor = glm::vec3(sphere.color_specular[0], sphere.color_specular[1], sphere.color_specular[2]);
-    data.interpolatedShininess = (float)sphere.shininess;
+//     data.interpolatedDiffuseColor = glm::vec3(sphere.color_diffuse[0], sphere.color_diffuse[1], sphere.color_diffuse[2]);
+//     data.interpolatedSpecularColor = glm::vec3(sphere.color_specular[0], sphere.color_specular[1], sphere.color_specular[2]);
+//     data.interpolatedShininess = (float)sphere.shininess;
 
-    return true;
-}
+//     return true;
+// }
 
 // function to test ray triangle intersection, returns true if intersect and provide relevant data
 bool rayIntersectTriangle(const glm::vec3& ray_o, const glm::vec3& ray_d, const Triangle& triangle, IntersectData& data)
@@ -411,7 +414,7 @@ bool segmentIntersectSphere(const glm::vec3& a, const glm::vec3& b, const Sphere
     glm::vec3 ab = b - a;
     glm::vec3 ray_d = glm::normalize(ab);
 
-    if (rayIntersectSphere(a, ray_d, sphere, data))
+    if (sphere.intersectRay(a, ray_d, data)) //rayIntersectSphere(a, ray_d, sphere, data)
     {
         glm::vec3 aToIntersectionPoint = data.t * ray_d;
 
@@ -478,7 +481,7 @@ glm::vec3 recursiveRayTrace(const glm::vec3& ray_o, const glm::vec3& ray_d, int 
         IntersectData tempData;
         for (int k = 0; k < num_spheres; ++k)
         {
-            if (rayIntersectSphere(ray_o, ray_d, spheres[k], tempData))
+            if (spheres[k].intersectRay(ray_o, ray_d, tempData)) //(rayIntersectSphere(ray_o, ray_d, spheres[k], tempData))
             {
                 // if we see a smaller t update intersection data
                 if (tempData.t < data.t)
@@ -636,7 +639,8 @@ void processScene()
             IntersectData tempData;
             for (int k = 0; k < num_spheres; ++k)
             {
-                if (rayIntersectSphere(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], spheres[k], tempData))
+                // if (rayIntersectSphere(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], spheres[k], tempData))
+                if(spheres[k].intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], tempData))
                 {
                     // if we see a smaller t update intersection data
                     if (tempData.t < data.t)
@@ -937,7 +941,7 @@ int loadScene(char *argv)
   int number_of_objects;
   char type[50];
   Triangle t;
-  Sphere s;
+//   Sphere s;
   Light l;
   fscanf(file,"%i", &number_of_objects);
 
@@ -971,19 +975,19 @@ int loadScene(char *argv)
     else if(strcasecmp(type,"sphere")==0)
     {
       printf("found sphere\n");
-
-      parse_doubles(file,"pos:",s.position);
-      parse_rad(file,&s.radius);
-      parse_doubles(file,"dif:",s.color_diffuse);
-      parse_doubles(file,"spe:",s.color_specular);
-      parse_shi(file,&s.shininess);
+      Sphere newSphere;
+      parse_doubles(file,"pos:",newSphere.position);
+      parse_rad(file,&newSphere.radius);
+      parse_doubles(file,"dif:",newSphere.color_diffuse);
+      parse_doubles(file,"spe:",newSphere.color_specular);
+      parse_shi(file,&newSphere.shininess);
 
       if(num_spheres == MAX_SPHERES)
       {
         printf("too many spheres, you should increase MAX_SPHERES!\n");
         exit(0);
       }
-      spheres[num_spheres++] = s;
+      spheres[num_spheres++] = newSphere;
     }
     else if(strcasecmp(type,"light")==0)
     {
