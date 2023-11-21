@@ -5,7 +5,9 @@
  * *************************
 */
 #include "raytracer.h"
+#include "Renderable.h"
 #include "Sphere.cpp"
+#include "Triangle.cpp"
 // #ifdef WIN32
 //   #include <windows.h>
 // #endif
@@ -58,19 +60,19 @@ unsigned char buffer[HEIGHT][WIDTH][3];
 
 
 
-struct Vertex
-{
-  double position[3];
-  double color_diffuse[3];
-  double color_specular[3];
-  double normal[3];
-  double shininess;
-};
+// struct Vertex
+// {
+//   double position[3];
+//   double color_diffuse[3];
+//   double color_specular[3];
+//   double normal[3];
+//   double shininess;
+// };
 
-struct Triangle
-{
-  Vertex v[3];
-};
+// struct Triangle
+// {
+//   Vertex v[3];
+// };
 
 // struct Sphere
 // {
@@ -97,7 +99,7 @@ struct Light
 //     float interpolatedShininess = 0.0f;
 //     float t = FLT_MAX;
 // };
-
+Renderable* renderables[MAX_SPHERES + MAX_TRIANGLES];
 Triangle triangles[MAX_TRIANGLES];
 Sphere spheres[MAX_SPHERES];
 Light lights[MAX_LIGHTS];
@@ -141,10 +143,10 @@ float degreesToRadians(float degrees)
     return degrees * (PI / 180.0f);
 }
 
-bool isNearlyZero(float val)
-{
-    return abs(val) < eps;
-}
+// bool isNearlyZero(float val)
+// {
+//     return abs(val) < eps;
+// }
 
 bool areNearlyEqual(float a, float b)
 {
@@ -296,116 +298,116 @@ void generateAllRaysFromCOP()
 // }
 
 // function to test ray triangle intersection, returns true if intersect and provide relevant data
-bool rayIntersectTriangle(const glm::vec3& ray_o, const glm::vec3& ray_d, const Triangle& triangle, IntersectData& data)
-{
-    // test if ray and plane are parallel
-    glm::vec3 v1(triangle.v[0].position[0], triangle.v[0].position[1], triangle.v[0].position[2]);
-    glm::vec3 v2(triangle.v[1].position[0], triangle.v[1].position[1], triangle.v[1].position[2]);
-    glm::vec3 v3(triangle.v[2].position[0], triangle.v[2].position[1], triangle.v[2].position[2]);
+// bool rayIntersectTriangle(const glm::vec3& ray_o, const glm::vec3& ray_d, const Triangle& triangle, IntersectData& data)
+// {
+//     // test if ray and plane are parallel
+//     glm::vec3 v1(triangle.v[0].position[0], triangle.v[0].position[1], triangle.v[0].position[2]);
+//     glm::vec3 v2(triangle.v[1].position[0], triangle.v[1].position[1], triangle.v[1].position[2]);
+//     glm::vec3 v3(triangle.v[2].position[0], triangle.v[2].position[1], triangle.v[2].position[2]);
 
-    glm::vec3 planeNormal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
+//     glm::vec3 planeNormal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
 
-    // if ray is parallel to the plane
-    float nDotd = glm::dot(planeNormal, ray_d);
-    if (abs(nDotd) < eps)
-    {
-        return false;
-    }
+//     // if ray is parallel to the plane
+//     float nDotd = glm::dot(planeNormal, ray_d);
+//     if (abs(nDotd) < eps)
+//     {
+//         return false;
+//     }
 
-    // calculate ray plane intersection
-    float planeCoefficient_d = -(glm::dot(planeNormal, v1));
-    float t = -(glm::dot(planeNormal, ray_o) + planeCoefficient_d) / nDotd;
+//     // calculate ray plane intersection
+//     float planeCoefficient_d = -(glm::dot(planeNormal, v1));
+//     float t = -(glm::dot(planeNormal, ray_o) + planeCoefficient_d) / nDotd;
 
-    // intersection behind ray origin
-    if (t <= eps)
-    {
-        return false;
-    }
+//     // intersection behind ray origin
+//     if (t <= eps)
+//     {
+//         return false;
+//     }
 
-    // calculate plane intersection point
-    glm::vec3 I = ray_o + t * ray_d;
+//     // calculate plane intersection point
+//     glm::vec3 I = ray_o + t * ray_d;
 
-    //try to 2D projection onto different planes and calculate barycentric coordinates
-    float areaV1V2V3 = -1.0f;
-    float areaV1V2I = -1.0f;
-    float areaV2V3I = -1.0f;
-    float areaV1IV3 = -1.0f;
+//     //try to 2D projection onto different planes and calculate barycentric coordinates
+//     float areaV1V2V3 = -1.0f;
+//     float areaV1V2I = -1.0f;
+//     float areaV2V3I = -1.0f;
+//     float areaV1IV3 = -1.0f;
 
-    float weightV1V2I = -1.0f;
-    float weightV2V3I = -1.0f;
-    float weightV1IV3 = -1.0f;
+//     float weightV1V2I = -1.0f;
+//     float weightV2V3I = -1.0f;
+//     float weightV1IV3 = -1.0f;
 
-    // try xy plane
-    if (!isNearlyZero(glm::dot(planeNormal, glm::vec3(0.0f, 0.0f, 1.0f))))
-    {
-        areaV1V2V3 = 0.5f * ((v2.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (v2.y - v1.y));
-        areaV1V2I = 0.5f * ((v2.x - v1.x) * (I.y - v1.y) - (I.x - v1.x) * (v2.y - v1.y));
-        areaV2V3I = 0.5f * ((v2.x - I.x) * (v3.y - I.y) - (v3.x - I.x) * (v2.y - I.y));
-        areaV1IV3 = 0.5f * ((I.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (I.y - v1.y));
-    }
-    // try xz plane
-    else if (!isNearlyZero(glm::dot(planeNormal, glm::vec3(0.0f, 1.0f, 0.0f))))
-    {
-        areaV1V2V3 = 0.5f * ((v2.x - v1.x) * (v3.z - v1.z) - (v3.x - v1.x) * (v2.z - v1.z));
-        areaV1V2I = 0.5f * ((v2.x - v1.x) * (I.z - v1.z) - (I.x - v1.x) * (v2.z - v1.z));
-        areaV2V3I = 0.5f * ((v2.x - I.x) * (v3.z - I.z) - (v3.x - I.x) * (v2.z - I.z));
-        areaV1IV3 = 0.5f * ((I.x - v1.x) * (v3.z - v1.z) - (v3.x - v1.x) * (I.z - v1.z));
-    }
-    // has to be yz plane
-    else
-    {
-        areaV1V2V3 = 0.5f * ((v2.y - v1.y) * (v3.z - v1.z) - (v3.y - v1.y) * (v2.z - v1.z));
-        areaV1V2I = 0.5f * ((v2.y - v1.y) * (I.z - v1.z) - (I.y - v1.y) * (v2.z - v1.z));
-        areaV2V3I = 0.5f * ((v2.y - I.y) * (v3.z - I.z) - (v3.y - I.y) * (v2.z - I.z));
-        areaV1IV3 = 0.5f * ((I.y - v1.y) * (v3.z - v1.z) - (v3.y - v1.y) * (I.z - v1.z));
-    }
+//     // try xy plane
+//     if (!isNearlyZero(glm::dot(planeNormal, glm::vec3(0.0f, 0.0f, 1.0f))))
+//     {
+//         areaV1V2V3 = 0.5f * ((v2.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (v2.y - v1.y));
+//         areaV1V2I = 0.5f * ((v2.x - v1.x) * (I.y - v1.y) - (I.x - v1.x) * (v2.y - v1.y));
+//         areaV2V3I = 0.5f * ((v2.x - I.x) * (v3.y - I.y) - (v3.x - I.x) * (v2.y - I.y));
+//         areaV1IV3 = 0.5f * ((I.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (I.y - v1.y));
+//     }
+//     // try xz plane
+//     else if (!isNearlyZero(glm::dot(planeNormal, glm::vec3(0.0f, 1.0f, 0.0f))))
+//     {
+//         areaV1V2V3 = 0.5f * ((v2.x - v1.x) * (v3.z - v1.z) - (v3.x - v1.x) * (v2.z - v1.z));
+//         areaV1V2I = 0.5f * ((v2.x - v1.x) * (I.z - v1.z) - (I.x - v1.x) * (v2.z - v1.z));
+//         areaV2V3I = 0.5f * ((v2.x - I.x) * (v3.z - I.z) - (v3.x - I.x) * (v2.z - I.z));
+//         areaV1IV3 = 0.5f * ((I.x - v1.x) * (v3.z - v1.z) - (v3.x - v1.x) * (I.z - v1.z));
+//     }
+//     // has to be yz plane
+//     else
+//     {
+//         areaV1V2V3 = 0.5f * ((v2.y - v1.y) * (v3.z - v1.z) - (v3.y - v1.y) * (v2.z - v1.z));
+//         areaV1V2I = 0.5f * ((v2.y - v1.y) * (I.z - v1.z) - (I.y - v1.y) * (v2.z - v1.z));
+//         areaV2V3I = 0.5f * ((v2.y - I.y) * (v3.z - I.z) - (v3.y - I.y) * (v2.z - I.z));
+//         areaV1IV3 = 0.5f * ((I.y - v1.y) * (v3.z - v1.z) - (v3.y - v1.y) * (I.z - v1.z));
+//     }
 
-    // test if the intersection is in triangle, reject if we get negative weight
-    weightV1V2I = areaV1V2I / areaV1V2V3;
-    if (weightV1V2I < 0.0f)
-    {
-        return false;
-    }
+//     // test if the intersection is in triangle, reject if we get negative weight
+//     weightV1V2I = areaV1V2I / areaV1V2V3;
+//     if (weightV1V2I < 0.0f)
+//     {
+//         return false;
+//     }
 
-    weightV2V3I = areaV2V3I / areaV1V2V3;
-    if (weightV2V3I < 0.0f)
-    {
-        return false;
-    }
+//     weightV2V3I = areaV2V3I / areaV1V2V3;
+//     if (weightV2V3I < 0.0f)
+//     {
+//         return false;
+//     }
 
-    weightV1IV3 = areaV1IV3 / areaV1V2V3;
-    if (weightV1IV3 < 0.0f)
-    {
-        return false;
-    }
+//     weightV1IV3 = areaV1IV3 / areaV1V2V3;
+//     if (weightV1IV3 < 0.0f)
+//     {
+//         return false;
+//     }
 
-    // fill out intersection data
-    glm::vec3 v1_normal(triangle.v[0].normal[0], triangle.v[0].normal[1], triangle.v[0].normal[2]);
-    glm::vec3 v2_normal(triangle.v[1].normal[0], triangle.v[1].normal[1], triangle.v[1].normal[2]);
-    glm::vec3 v3_normal(triangle.v[2].normal[0], triangle.v[2].normal[1], triangle.v[2].normal[2]);
+//     // fill out intersection data
+//     glm::vec3 v1_normal(triangle.v[0].normal[0], triangle.v[0].normal[1], triangle.v[0].normal[2]);
+//     glm::vec3 v2_normal(triangle.v[1].normal[0], triangle.v[1].normal[1], triangle.v[1].normal[2]);
+//     glm::vec3 v3_normal(triangle.v[2].normal[0], triangle.v[2].normal[1], triangle.v[2].normal[2]);
 
-    glm::vec3 v1_diffuse(triangle.v[0].color_diffuse[0], triangle.v[0].color_diffuse[1], triangle.v[0].color_diffuse[2]);
-    glm::vec3 v2_diffuse(triangle.v[1].color_diffuse[0], triangle.v[1].color_diffuse[1], triangle.v[1].color_diffuse[2]);
-    glm::vec3 v3_diffuse(triangle.v[2].color_diffuse[0], triangle.v[2].color_diffuse[1], triangle.v[2].color_diffuse[2]);
+//     glm::vec3 v1_diffuse(triangle.v[0].color_diffuse[0], triangle.v[0].color_diffuse[1], triangle.v[0].color_diffuse[2]);
+//     glm::vec3 v2_diffuse(triangle.v[1].color_diffuse[0], triangle.v[1].color_diffuse[1], triangle.v[1].color_diffuse[2]);
+//     glm::vec3 v3_diffuse(triangle.v[2].color_diffuse[0], triangle.v[2].color_diffuse[1], triangle.v[2].color_diffuse[2]);
 
-    glm::vec3 v1_specular(triangle.v[0].color_specular[0], triangle.v[0].color_specular[1], triangle.v[0].color_specular[2]);
-    glm::vec3 v2_specular(triangle.v[1].color_specular[0], triangle.v[1].color_specular[1], triangle.v[1].color_specular[2]);
-    glm::vec3 v3_specular(triangle.v[2].color_specular[0], triangle.v[2].color_specular[1], triangle.v[2].color_specular[2]);
+//     glm::vec3 v1_specular(triangle.v[0].color_specular[0], triangle.v[0].color_specular[1], triangle.v[0].color_specular[2]);
+//     glm::vec3 v2_specular(triangle.v[1].color_specular[0], triangle.v[1].color_specular[1], triangle.v[1].color_specular[2]);
+//     glm::vec3 v3_specular(triangle.v[2].color_specular[0], triangle.v[2].color_specular[1], triangle.v[2].color_specular[2]);
 
-    float v1_shininess = triangle.v[0].shininess;
-    float v2_shininess = triangle.v[1].shininess;
-    float v3_shininess = triangle.v[2].shininess;
+//     float v1_shininess = triangle.v[0].shininess;
+//     float v2_shininess = triangle.v[1].shininess;
+//     float v3_shininess = triangle.v[2].shininess;
 
-    // interpolate
-    data.intersectPoint = I;
-    data.intersectNormal = glm::normalize(v1_normal * weightV2V3I + v2_normal * weightV1IV3 + v3_normal * weightV1V2I);
-    data.interpolatedDiffuseColor = v1_diffuse * weightV2V3I + v2_diffuse * weightV1IV3 + v3_diffuse * weightV1V2I;
-    data.interpolatedSpecularColor = v1_specular * weightV2V3I + v2_specular * weightV1IV3 + v3_specular * weightV1V2I;
-    data.interpolatedShininess = v1_shininess * weightV2V3I + v2_shininess * weightV1IV3 + v3_shininess * weightV1V2I;
-    data.t = t;
+//     // interpolate
+//     data.intersectPoint = I;
+//     data.intersectNormal = glm::normalize(v1_normal * weightV2V3I + v2_normal * weightV1IV3 + v3_normal * weightV1V2I);
+//     data.interpolatedDiffuseColor = v1_diffuse * weightV2V3I + v2_diffuse * weightV1IV3 + v3_diffuse * weightV1V2I;
+//     data.interpolatedSpecularColor = v1_specular * weightV2V3I + v2_specular * weightV1IV3 + v3_specular * weightV1V2I;
+//     data.interpolatedShininess = v1_shininess * weightV2V3I + v2_shininess * weightV1IV3 + v3_shininess * weightV1V2I;
+//     data.t = t;
 
-    return true;
-}
+//     return true;
+// }
 
 // function to test segment-sphere intersection, returns true if the segment intersects the sphere
 bool segmentIntersectSphere(const glm::vec3& a, const glm::vec3& b, const Sphere& sphere)
@@ -443,7 +445,7 @@ bool segmentIntersectTriangle(const glm::vec3& a, const glm::vec3& b, const Tria
     glm::vec3 ab = b - a;
     glm::vec3 ray_d = glm::normalize(ab);
 
-    if (rayIntersectTriangle(a, ray_d, triangle, data))
+    if (triangle.intersectRay(a, ray_d, data))//(rayIntersectTriangle(a, ray_d, triangle, data))
     {
         glm::vec3 aToIntersectionPoint = data.t * ray_d;
 
@@ -496,7 +498,7 @@ glm::vec3 recursiveRayTrace(const glm::vec3& ray_o, const glm::vec3& ray_d, int 
         IntersectData tempData_tri;
         for (int l = 0; l < num_triangles; ++l)
         {
-            if (rayIntersectTriangle(ray_o, ray_d, triangles[l], tempData_tri))
+            if (triangles[l].intersectRay(ray_o, ray_d, tempData_tri))//(rayIntersectTriangle(ray_o, ray_d, triangles[l], tempData_tri))
             {
                 if (tempData_tri.t < data_tri.t)
                 {
@@ -655,7 +657,8 @@ void processScene()
             IntersectData tempData_tri;
             for (int l = 0; l < num_triangles; ++l)
             {
-                if (rayIntersectTriangle(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], triangles[l], tempData_tri))
+                //if (rayIntersectTriangle(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], triangles[l], tempData_tri))
+                if(triangles[l].intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex],tempData_tri))
                 {
                     if (tempData_tri.t < data_tri.t)
                     {
@@ -975,19 +978,19 @@ int loadScene(char *argv)
     else if(strcasecmp(type,"sphere")==0)
     {
       printf("found sphere\n");
-      Sphere newSphere;
-      parse_doubles(file,"pos:",newSphere.position);
-      parse_rad(file,&newSphere.radius);
-      parse_doubles(file,"dif:",newSphere.color_diffuse);
-      parse_doubles(file,"spe:",newSphere.color_specular);
-      parse_shi(file,&newSphere.shininess);
+      Sphere* newSphere= new Sphere;
+      parse_doubles(file,"pos:",newSphere->position);
+      parse_rad(file,&newSphere->radius);
+      parse_doubles(file,"dif:",newSphere->color_diffuse);
+      parse_doubles(file,"spe:",newSphere->color_specular);
+      parse_shi(file,&newSphere->shininess);
 
       if(num_spheres == MAX_SPHERES)
       {
         printf("too many spheres, you should increase MAX_SPHERES!\n");
         exit(0);
       }
-      spheres[num_spheres++] = newSphere;
+      spheres[num_spheres++] = *newSphere;
     }
     else if(strcasecmp(type,"light")==0)
     {

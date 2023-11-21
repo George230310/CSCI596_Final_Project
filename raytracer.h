@@ -64,4 +64,19 @@ struct IntersectData
     float interpolatedShininess = 0.0f;
     float t = FLT_MAX;
 };
+
+struct Vertex
+{
+  double position[3];
+  double color_diffuse[3];
+  double color_specular[3];
+  double normal[3];
+  double shininess;
+};
+
+inline bool isNearlyZero(float val)
+{
+    return abs(val) < eps;
+}
+
 #endif //RAYTRACER_HEADER
