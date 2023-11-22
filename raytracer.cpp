@@ -8,80 +8,12 @@
 #include "Renderable.h"
 #include "Sphere.cpp"
 #include "Triangle.cpp"
-// #ifdef WIN32
-//   #include <windows.h>
-// #endif
-
-// #if defined(WIN32) || defined(linux)
-//   #include <GL/gl.h>
-//   #include <GL/glut.h>
-// #elif defined(__APPLE__)
-//   #include <OpenGL/gl.h>
-//   #include <GLUT/glut.h>
-// #endif
-
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-// #ifdef WIN32
-//   #define strcasecmp _stricmp
-// #endif
-
-// #include "glm/glm.hpp"
-
-// // #include <imageIO.h>
-// #include "png++/png.hpp"
-// #include <math.h>
-// #include <vector>
-// #include <random>
-
-// #define PI 3.14159265
-
-// #define MAX_TRIANGLES 20000
-// #define MAX_SPHERES 100
-// #define MAX_LIGHTS 100
 
 char * filename = NULL;
-
-// //different display modes
-// #define MODE_DISPLAY 1
-// #define MODE_JPEG 2
-
 int mode = MODE_DISPLAY;
-
-// //you may want to make these smaller for debugging purposes
-// #define WIDTH 640
-// #define HEIGHT 480
-
-// //the field of view of the camera
-// #define fov 60
-
 unsigned char buffer[HEIGHT][WIDTH][3];
 
 
-
-// struct Vertex
-// {
-//   double position[3];
-//   double color_diffuse[3];
-//   double color_specular[3];
-//   double normal[3];
-//   double shininess;
-// };
-
-// struct Triangle
-// {
-//   Vertex v[3];
-// };
-
-// struct Sphere
-// {
-//   double position[3];
-//   double color_diffuse[3];
-//   double color_specular[3];
-//   double shininess;
-//   double radius;
-// };
 
 struct Light
 {
@@ -89,19 +21,7 @@ struct Light
   double color[3];
 };
 
-// struct IntersectData
-// {
-//     glm::vec3 intersectPoint;
-//     glm::vec3 intersectNormal;
-
-//     glm::vec3 interpolatedDiffuseColor;
-//     glm::vec3 interpolatedSpecularColor;
-//     float interpolatedShininess = 0.0f;
-//     float t = FLT_MAX;
-// };
 Renderable* renderables[MAX_SPHERES + MAX_TRIANGLES];
-Triangle triangles[MAX_TRIANGLES];
-Sphere spheres[MAX_SPHERES];
 Light lights[MAX_LIGHTS];
 std::vector<Light> subdividedLights;
 double ambient_light[3];
@@ -114,6 +34,7 @@ unsigned char allPixels[WIDTH][HEIGHT][3];
 
 int num_triangles = 0;
 int num_spheres = 0;
+int num_renderables = 0;
 int num_lights = 0;
 
 void plot_pixel_display(int x,int y,unsigned char r,unsigned char g,unsigned char b);
@@ -234,239 +155,6 @@ void generateAllRaysFromCOP()
     }
 }
 
-// function to test ray-sphere intersection, returns true if intersect and provides relevant data
-// bool rayIntersectSphere(const glm::vec3& ray_o, const glm::vec3& ray_d, const Sphere& sphere, IntersectData& data)
-// {
-//     // if the radius of sphere is zero, no intersection
-//     if (sphere.radius < eps)
-//     {
-//         return false;
-//     }
-
-//     float b = 2.0f * (ray_d.x * (ray_o.x - sphere.position[0]) + ray_d.y * (ray_o.y - sphere.position[1]) + ray_d.z * (ray_o.z - sphere.position[2]));
-//     float c = powf(ray_o.x - sphere.position[0], 2.0f) + powf(ray_o.y - sphere.position[1], 2.0f) + powf(ray_o.z - sphere.position[2], 2.0f) - powf(sphere.radius, 2.0f);
-
-//     float delta = powf(b, 2.0f) - 4.0f * c;
-
-//     if (delta < 0.0f)
-//     {
-//         return false;
-//     }
-
-//     float t0 = (-b + sqrtf(delta)) / 2.0f;
-//     float t1 = (-b - sqrtf(delta)) / 2.0f;
-
-//     // if both t are less or equal to zero, no intersection
-//     if (t0 < eps && t1 < eps)
-//     {
-//         return false;
-//     }
-
-//     float t_intersect = 0.0f;
-
-//     if (t0 < eps)
-//     {
-//         t_intersect = t1;
-//     }
-//     else if (t1 < eps)
-//     {
-//         t_intersect = t0;
-//     }
-//     else
-//     {
-//         t_intersect = std::min(t0, t1);
-//     }
-
-//     // fill out intersection data
-//     data.intersectPoint = ray_o + ray_d * t_intersect;
-//     glm::vec3 sphereCenter(sphere.position[0], sphere.position[1], sphere.position[2]);
-//     data.intersectNormal = (data.intersectPoint - sphereCenter) / (float)sphere.radius;
-
-//     // negate if ray originates inside the sphere
-//     if (glm::length(ray_o - sphereCenter) < (float)sphere.radius)
-//     {
-//         data.intersectNormal = -data.intersectNormal;
-//     }
-
-//     data.t = t_intersect;
-
-//     data.interpolatedDiffuseColor = glm::vec3(sphere.color_diffuse[0], sphere.color_diffuse[1], sphere.color_diffuse[2]);
-//     data.interpolatedSpecularColor = glm::vec3(sphere.color_specular[0], sphere.color_specular[1], sphere.color_specular[2]);
-//     data.interpolatedShininess = (float)sphere.shininess;
-
-//     return true;
-// }
-
-// function to test ray triangle intersection, returns true if intersect and provide relevant data
-// bool rayIntersectTriangle(const glm::vec3& ray_o, const glm::vec3& ray_d, const Triangle& triangle, IntersectData& data)
-// {
-//     // test if ray and plane are parallel
-//     glm::vec3 v1(triangle.v[0].position[0], triangle.v[0].position[1], triangle.v[0].position[2]);
-//     glm::vec3 v2(triangle.v[1].position[0], triangle.v[1].position[1], triangle.v[1].position[2]);
-//     glm::vec3 v3(triangle.v[2].position[0], triangle.v[2].position[1], triangle.v[2].position[2]);
-
-//     glm::vec3 planeNormal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
-
-//     // if ray is parallel to the plane
-//     float nDotd = glm::dot(planeNormal, ray_d);
-//     if (abs(nDotd) < eps)
-//     {
-//         return false;
-//     }
-
-//     // calculate ray plane intersection
-//     float planeCoefficient_d = -(glm::dot(planeNormal, v1));
-//     float t = -(glm::dot(planeNormal, ray_o) + planeCoefficient_d) / nDotd;
-
-//     // intersection behind ray origin
-//     if (t <= eps)
-//     {
-//         return false;
-//     }
-
-//     // calculate plane intersection point
-//     glm::vec3 I = ray_o + t * ray_d;
-
-//     //try to 2D projection onto different planes and calculate barycentric coordinates
-//     float areaV1V2V3 = -1.0f;
-//     float areaV1V2I = -1.0f;
-//     float areaV2V3I = -1.0f;
-//     float areaV1IV3 = -1.0f;
-
-//     float weightV1V2I = -1.0f;
-//     float weightV2V3I = -1.0f;
-//     float weightV1IV3 = -1.0f;
-
-//     // try xy plane
-//     if (!isNearlyZero(glm::dot(planeNormal, glm::vec3(0.0f, 0.0f, 1.0f))))
-//     {
-//         areaV1V2V3 = 0.5f * ((v2.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (v2.y - v1.y));
-//         areaV1V2I = 0.5f * ((v2.x - v1.x) * (I.y - v1.y) - (I.x - v1.x) * (v2.y - v1.y));
-//         areaV2V3I = 0.5f * ((v2.x - I.x) * (v3.y - I.y) - (v3.x - I.x) * (v2.y - I.y));
-//         areaV1IV3 = 0.5f * ((I.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (I.y - v1.y));
-//     }
-//     // try xz plane
-//     else if (!isNearlyZero(glm::dot(planeNormal, glm::vec3(0.0f, 1.0f, 0.0f))))
-//     {
-//         areaV1V2V3 = 0.5f * ((v2.x - v1.x) * (v3.z - v1.z) - (v3.x - v1.x) * (v2.z - v1.z));
-//         areaV1V2I = 0.5f * ((v2.x - v1.x) * (I.z - v1.z) - (I.x - v1.x) * (v2.z - v1.z));
-//         areaV2V3I = 0.5f * ((v2.x - I.x) * (v3.z - I.z) - (v3.x - I.x) * (v2.z - I.z));
-//         areaV1IV3 = 0.5f * ((I.x - v1.x) * (v3.z - v1.z) - (v3.x - v1.x) * (I.z - v1.z));
-//     }
-//     // has to be yz plane
-//     else
-//     {
-//         areaV1V2V3 = 0.5f * ((v2.y - v1.y) * (v3.z - v1.z) - (v3.y - v1.y) * (v2.z - v1.z));
-//         areaV1V2I = 0.5f * ((v2.y - v1.y) * (I.z - v1.z) - (I.y - v1.y) * (v2.z - v1.z));
-//         areaV2V3I = 0.5f * ((v2.y - I.y) * (v3.z - I.z) - (v3.y - I.y) * (v2.z - I.z));
-//         areaV1IV3 = 0.5f * ((I.y - v1.y) * (v3.z - v1.z) - (v3.y - v1.y) * (I.z - v1.z));
-//     }
-
-//     // test if the intersection is in triangle, reject if we get negative weight
-//     weightV1V2I = areaV1V2I / areaV1V2V3;
-//     if (weightV1V2I < 0.0f)
-//     {
-//         return false;
-//     }
-
-//     weightV2V3I = areaV2V3I / areaV1V2V3;
-//     if (weightV2V3I < 0.0f)
-//     {
-//         return false;
-//     }
-
-//     weightV1IV3 = areaV1IV3 / areaV1V2V3;
-//     if (weightV1IV3 < 0.0f)
-//     {
-//         return false;
-//     }
-
-//     // fill out intersection data
-//     glm::vec3 v1_normal(triangle.v[0].normal[0], triangle.v[0].normal[1], triangle.v[0].normal[2]);
-//     glm::vec3 v2_normal(triangle.v[1].normal[0], triangle.v[1].normal[1], triangle.v[1].normal[2]);
-//     glm::vec3 v3_normal(triangle.v[2].normal[0], triangle.v[2].normal[1], triangle.v[2].normal[2]);
-
-//     glm::vec3 v1_diffuse(triangle.v[0].color_diffuse[0], triangle.v[0].color_diffuse[1], triangle.v[0].color_diffuse[2]);
-//     glm::vec3 v2_diffuse(triangle.v[1].color_diffuse[0], triangle.v[1].color_diffuse[1], triangle.v[1].color_diffuse[2]);
-//     glm::vec3 v3_diffuse(triangle.v[2].color_diffuse[0], triangle.v[2].color_diffuse[1], triangle.v[2].color_diffuse[2]);
-
-//     glm::vec3 v1_specular(triangle.v[0].color_specular[0], triangle.v[0].color_specular[1], triangle.v[0].color_specular[2]);
-//     glm::vec3 v2_specular(triangle.v[1].color_specular[0], triangle.v[1].color_specular[1], triangle.v[1].color_specular[2]);
-//     glm::vec3 v3_specular(triangle.v[2].color_specular[0], triangle.v[2].color_specular[1], triangle.v[2].color_specular[2]);
-
-//     float v1_shininess = triangle.v[0].shininess;
-//     float v2_shininess = triangle.v[1].shininess;
-//     float v3_shininess = triangle.v[2].shininess;
-
-//     // interpolate
-//     data.intersectPoint = I;
-//     data.intersectNormal = glm::normalize(v1_normal * weightV2V3I + v2_normal * weightV1IV3 + v3_normal * weightV1V2I);
-//     data.interpolatedDiffuseColor = v1_diffuse * weightV2V3I + v2_diffuse * weightV1IV3 + v3_diffuse * weightV1V2I;
-//     data.interpolatedSpecularColor = v1_specular * weightV2V3I + v2_specular * weightV1IV3 + v3_specular * weightV1V2I;
-//     data.interpolatedShininess = v1_shininess * weightV2V3I + v2_shininess * weightV1IV3 + v3_shininess * weightV1V2I;
-//     data.t = t;
-
-//     return true;
-// }
-
-// function to test segment-sphere intersection, returns true if the segment intersects the sphere
-bool segmentIntersectSphere(const glm::vec3& a, const glm::vec3& b, const Sphere& sphere)
-{
-    IntersectData data;
-    glm::vec3 ab = b - a;
-    glm::vec3 ray_d = glm::normalize(ab);
-
-    if (sphere.intersectRay(a, ray_d, data)) //rayIntersectSphere(a, ray_d, sphere, data)
-    {
-        glm::vec3 aToIntersectionPoint = data.t * ray_d;
-
-        float lengthI = glm::length(aToIntersectionPoint);
-        float lengthAB = glm::length(ab);
-
-        // if the intersection point is not in the segment
-        if (lengthI >= lengthAB)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool segmentIntersectTriangle(const glm::vec3& a, const glm::vec3& b, const Triangle& triangle)
-{
-    IntersectData data;
-    glm::vec3 ab = b - a;
-    glm::vec3 ray_d = glm::normalize(ab);
-
-    if (triangle.intersectRay(a, ray_d, data))//(rayIntersectTriangle(a, ray_d, triangle, data))
-    {
-        glm::vec3 aToIntersectionPoint = data.t * ray_d;
-
-        float lengthI = glm::length(aToIntersectionPoint);
-        float lengthAB = glm::length(ab);
-
-        // if the intersection point is not in the segment
-        if (lengthI >= lengthAB)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
-    else
-    {
-        return false;
-    }
-}
 
 // function to do recursive reflection
 glm::vec3 recursiveRayTrace(const glm::vec3& ray_o, const glm::vec3& ray_d, int depth)
@@ -478,12 +166,12 @@ glm::vec3 recursiveRayTrace(const glm::vec3& ray_o, const glm::vec3& ray_d, int 
     }
     else
     {
-        // go through all spheres in scene and find the intersection with the smallest t
+        // go through all renderables in scene and find the intersection with the smallest t
         IntersectData data;
         IntersectData tempData;
-        for (int k = 0; k < num_spheres; ++k)
+        for (int k = 0; k < num_renderables; ++k)
         {
-            if (spheres[k].intersectRay(ray_o, ray_d, tempData)) //(rayIntersectSphere(ray_o, ray_d, spheres[k], tempData))
+            if (renderables[k]->intersectRay(ray_o, ray_d, tempData)) 
             {
                 // if we see a smaller t update intersection data
                 if (tempData.t < data.t)
@@ -491,26 +179,6 @@ glm::vec3 recursiveRayTrace(const glm::vec3& ray_o, const glm::vec3& ray_d, int 
                     data = tempData;
                 }
             }
-        }
-
-        // go through all triangles in scene and find the intersection with the smallest t
-        IntersectData data_tri;
-        IntersectData tempData_tri;
-        for (int l = 0; l < num_triangles; ++l)
-        {
-            if (triangles[l].intersectRay(ray_o, ray_d, tempData_tri))//(rayIntersectTriangle(ray_o, ray_d, triangles[l], tempData_tri))
-            {
-                if (tempData_tri.t < data_tri.t)
-                {
-                    data_tri = tempData_tri;
-                }
-            }
-        }
-
-        // choose between smallest t sphere and triangle
-        if (data_tri.t < data.t)
-        {
-            data = data_tri;
         }
 
         // if we find intersection
@@ -531,20 +199,10 @@ glm::vec3 recursiveRayTrace(const glm::vec3& ray_o, const glm::vec3& ray_d, int 
 
                 bool isInShadow = false;
 
-                // test whether we're shadowed by a sphere
-                for (int n = 0; n < num_spheres; ++n)
+                // test whether we're shadowed by a renderable
+                for (int n = 0; n < num_renderables; ++n)
                 {
-                    if (segmentIntersectSphere(a, b, spheres[n]))
-                    {
-                        isInShadow = true;
-                        break;
-                    }
-                }
-
-                // test whether we're shadowed by a triangle
-                for (int g = 0; g < num_triangles; ++g)
-                {
-                    if (segmentIntersectTriangle(a, b, triangles[g]))
+                    if (renderables[n]->intersectSegment(a,b))//(segmentIntersectSphere(a, b, renderables[n]))
                     {
                         isInShadow = true;
                         break;
@@ -636,13 +294,12 @@ void processScene()
     {
         for (int j = 0; j < HEIGHT * SSAA_Coefficient; ++j)
         {
-            // go through all spheres in scene and find the intersection with the smallest t
+            // go through all renderables in scene and find the intersection with the smallest t
             IntersectData data;
             IntersectData tempData;
-            for (int k = 0; k < num_spheres; ++k)
+            for (int k = 0; k < num_renderables; ++k)
             {
-                // if (rayIntersectSphere(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], spheres[k], tempData))
-                if(spheres[k].intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], tempData))
+                if(renderables[k]->intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], tempData))
                 {
                     // if we see a smaller t update intersection data
                     if (tempData.t < data.t)
@@ -651,28 +308,6 @@ void processScene()
                     }
                 }
             }
-
-            // go through all triangles in scene and find the intersection with the smallest t
-            IntersectData data_tri;
-            IntersectData tempData_tri;
-            for (int l = 0; l < num_triangles; ++l)
-            {
-                //if (rayIntersectTriangle(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], triangles[l], tempData_tri))
-                if(triangles[l].intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex],tempData_tri))
-                {
-                    if (tempData_tri.t < data_tri.t)
-                    {
-                        data_tri = tempData_tri;
-                    }
-                }
-            }
-
-            // choose between smallest t sphere and triangle
-            if (data_tri.t < data.t)
-            {
-                data = data_tri;
-            }
-
 
             // if we find intersection
             if (data.t < FLT_MAX)
@@ -692,20 +327,10 @@ void processScene()
 
                     bool isInShadow = false;
 
-                    // test whether we're shadowed by a sphere
-                    for (int n = 0; n < num_spheres; ++n)
+                    // test whether we're shadowed by a renderable
+                    for (int n = 0; n < num_renderables; ++n)
                     {
-                        if (segmentIntersectSphere(a, b, spheres[n]))
-                        {
-                            isInShadow = true;
-                            break;
-                        }
-                    }
-
-                    // test whether we're shadowed by a triangle
-                    for (int g = 0; g < num_triangles; ++g)
-                    {
-                        if (segmentIntersectTriangle(a, b, triangles[g]))
+                        if (renderables[n]->intersectSegment(a, b))
                         {
                             isInShadow = true;
                             break;
@@ -959,13 +584,14 @@ int loadScene(char *argv)
     if(strcasecmp(type,"triangle")==0)
     {
       printf("found triangle\n");
+      Triangle* newTriangle = new Triangle;
       for(int j=0;j < 3;j++)
       {
-        parse_doubles(file,"pos:",t.v[j].position);
-        parse_doubles(file,"nor:",t.v[j].normal);
-        parse_doubles(file,"dif:",t.v[j].color_diffuse);
-        parse_doubles(file,"spe:",t.v[j].color_specular);
-        parse_shi(file,&t.v[j].shininess);
+        parse_doubles(file,"pos:",newTriangle->v[j].position);
+        parse_doubles(file,"nor:",newTriangle->v[j].normal);
+        parse_doubles(file,"dif:",newTriangle->v[j].color_diffuse);
+        parse_doubles(file,"spe:",newTriangle->v[j].color_specular);
+        parse_shi(file,&newTriangle->v[j].shininess);
       }
 
       if(num_triangles == MAX_TRIANGLES)
@@ -973,7 +599,8 @@ int loadScene(char *argv)
         printf("too many triangles, you should increase MAX_TRIANGLES!\n");
         exit(0);
       }
-      triangles[num_triangles++] = t;
+        num_triangles++;
+        renderables[num_renderables++] = newTriangle;
     }
     else if(strcasecmp(type,"sphere")==0)
     {
@@ -990,7 +617,8 @@ int loadScene(char *argv)
         printf("too many spheres, you should increase MAX_SPHERES!\n");
         exit(0);
       }
-      spheres[num_spheres++] = *newSphere;
+        num_spheres++;
+        renderables[num_renderables++] = newSphere;
     }
     else if(strcasecmp(type,"light")==0)
     {
