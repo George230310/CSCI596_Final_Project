@@ -17,14 +17,18 @@ public:
     // Implementation of the intersectRay function
     bool intersectRay(const glm::vec3& ray_o, const glm::vec3& ray_d, IntersectData& data) const
     {
+        glm::vec3 sphereCenter(this->position[0], this->position[1], this->position[2]);
         // if the radius of sphere is zero, no intersection
         if (this->radius < eps)
         {
             return false;
         }
 
-        float b = 2.0f * (ray_d.x * (ray_o.x - this->position[0]) + ray_d.y * (ray_o.y - this->position[1]) + ray_d.z * (ray_o.z - this->position[2]));
-        float c = powf(ray_o.x - this->position[0], 2.0f) + powf(ray_o.y - this->position[1], 2.0f) + powf(ray_o.z - this->position[2], 2.0f) - powf(this->radius, 2.0f);
+        // float b = 2.0f * (ray_d.x * (ray_o.x - this->position[0]) + ray_d.y * (ray_o.y - this->position[1]) + ray_d.z * (ray_o.z - this->position[2]));
+        float b = 2.0f * dot(ray_d,(ray_o - sphereCenter));
+
+        // float c = powf(ray_o.x - this->position[0], 2.0f) + powf(ray_o.y - this->position[1], 2.0f) + powf(ray_o.z - this->position[2], 2.0f) - powf(this->radius, 2.0f);
+        float c = powf(length(ray_o-sphereCenter),2.0f) - powf(this->radius, 2.0f);
 
         float delta = powf(b, 2.0f) - 4.0f * c;
 
@@ -59,7 +63,7 @@ public:
 
         // fill out intersection data
         data.intersectPoint = ray_o + ray_d * t_intersect;
-        glm::vec3 sphereCenter(this->position[0], this->position[1], this->position[2]);
+        
         data.intersectNormal = (data.intersectPoint - sphereCenter) / (float)this->radius;
 
         // negate if ray originates inside the sphere

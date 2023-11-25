@@ -8,10 +8,12 @@
 #include "Renderable.h"
 #include "Sphere.cpp"
 #include "Triangle.cpp"
+#include "glm/gtc/random.hpp"
 
 char * filename = NULL;
 int mode = MODE_DISPLAY;
-unsigned char buffer[HEIGHT][WIDTH][3];
+unsigned int buffer[HEIGHT][WIDTH][3];
+
 
 
 
@@ -30,7 +32,7 @@ double ambient_light[3];
 std::vector<glm::vec3> normalizedScreenRaysDirections;
 
 // record pixel colors calculated
-unsigned char allPixels[WIDTH][HEIGHT][3];
+unsigned int allPixels[WIDTH][HEIGHT][3];
 
 int num_triangles = 0;
 int num_spheres = 0;
@@ -41,11 +43,9 @@ void plot_pixel_display(int x,int y,unsigned char r,unsigned char g,unsigned cha
 void plot_pixel_jpeg(int x,int y,unsigned char r,unsigned char g,unsigned char b);
 void plot_pixel(int x,int y,unsigned char r,unsigned char g,unsigned char b);
 
-// const float eps = 0.0005f;
-// const float eps_accurate = 0.0000001f;
 
 // ****************************** PROGRAM PARAMETERS *************************************
-const unsigned int SSAA_Coefficient = 1;
+const unsigned int SSAA_Coefficient = 10;
 
 const bool UseSoftShadow = false;
 const unsigned int numOfLightSubdivisions = 100;
@@ -63,11 +63,6 @@ float degreesToRadians(float degrees)
 {
     return degrees * (PI / 180.0f);
 }
-
-// bool isNearlyZero(float val)
-// {
-//     return abs(val) < eps;
-// }
 
 bool areNearlyEqual(float a, float b)
 {
@@ -457,6 +452,212 @@ void processScene()
     }
 }
 
+// function to generate Base ray from camera origin to pixel on virtual screen
+glm::vec3 generateBaseRay(int i, int j)
+{
+    float aspectRatio = (float)WIDTH / HEIGHT;
+
+    // calculate 3 corners of the screen
+    glm::vec3 topLeftScreenCorner;
+    topLeftScreenCorner.x = -aspectRatio * tanf(degreesToRadians(fov / 2.0f));
+    topLeftScreenCorner.y = tanf(degreesToRadians(fov / 2.0f));
+    topLeftScreenCorner.z = -1.0f;
+
+    glm::vec3 topRightScreenCorner;
+    topRightScreenCorner.x = -topLeftScreenCorner.x;
+    topRightScreenCorner.y = topLeftScreenCorner.y;
+    topRightScreenCorner.z = -1.0f;
+
+    glm::vec3 bottomRightScreenCorner;
+    bottomRightScreenCorner.x = -topLeftScreenCorner.x;
+    bottomRightScreenCorner.y = -topLeftScreenCorner.y;
+    bottomRightScreenCorner.z = -1.0f;
+
+    // offset for each pixel
+    glm::vec3 pixelWidthOffset = (topRightScreenCorner - topLeftScreenCorner) / ((float)WIDTH);
+    glm::vec3 pixelHeightOffset = (bottomRightScreenCorner - topRightScreenCorner) / ((float)HEIGHT);
+
+    glm::vec3 ray = topLeftScreenCorner + (float)i * pixelWidthOffset + (float)j * pixelHeightOffset + pixelWidthOffset / 2.0f + pixelHeightOffset / 2.0f;
+    ray = glm::normalize(ray);
+    return ray;
+}
+
+// Anti-aliasing using random rays
+void processScene_randomized()
+{
+    SubdivideLightSources();
+
+    // Constants to project rays to each pixel on virtual screen
+    float aspectRatio = (float)WIDTH / HEIGHT;
+
+    // calculate 3 corners of the screen
+    glm::vec3 topLeftScreenCorner;
+    topLeftScreenCorner.x = -aspectRatio * tanf(degreesToRadians(fov / 2.0f));
+    topLeftScreenCorner.y = tanf(degreesToRadians(fov / 2.0f));
+    topLeftScreenCorner.z = -1.0f;
+
+    glm::vec3 topRightScreenCorner;
+    topRightScreenCorner.x = -topLeftScreenCorner.x;
+    topRightScreenCorner.y = topLeftScreenCorner.y;
+    topRightScreenCorner.z = -1.0f;
+
+    glm::vec3 bottomRightScreenCorner;
+    bottomRightScreenCorner.x = -topLeftScreenCorner.x;
+    bottomRightScreenCorner.y = -topLeftScreenCorner.y;
+    bottomRightScreenCorner.z = -1.0f;
+
+    // offset for each pixel
+    glm::vec3 pixelWidthOffset = (topRightScreenCorner - topLeftScreenCorner) / ((float)WIDTH);
+    glm::vec3 pixelHeightOffset = (bottomRightScreenCorner - topRightScreenCorner) / ((float)HEIGHT);
+
+    // go through each pixel
+    for (int i = 0; i < WIDTH ; ++i)
+    {
+        for (int j = 0; j < HEIGHT; ++j)
+        {
+            glm::vec3 baseRay = glm::normalize(topLeftScreenCorner + (float)i * pixelWidthOffset + (float)j * pixelHeightOffset + pixelWidthOffset / 2.0f + pixelHeightOffset / 2.0f);
+            for(int l=0;l<SSAA_Coefficient*SSAA_Coefficient;l++)
+            {
+              glm::vec3 randomOffset  = glm::vec3(glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f));
+              glm::vec3 finalRay = baseRay + randomOffset;
+              IntersectData data;
+              IntersectData tempData;
+              // go through all renderables in scene and find the intersection with the smallest t
+              for (int k = 0; k < num_renderables; ++k)
+              {
+                  if(renderables[k]->intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), finalRay, tempData))
+                  {
+                      // if we see a smaller t update intersection data
+                      if (tempData.t < data.t)
+                      {
+                          data = tempData;
+                      }
+                  }
+              }
+              // if we find intersection
+              if (data.t < FLT_MAX)
+              {
+                  glm::vec3 pixelColor(0.0f, 0.0f, 0.0f);
+
+                  // add ambient color once
+                  pixelColor.x += ambient_light[0];
+                  pixelColor.y += ambient_light[1];
+                  pixelColor.z += ambient_light[2];
+
+                  // go through each light source and cast a shadow ray
+                  for (unsigned int m = 0; m < subdividedLights.size(); ++m)
+                  {
+                      glm::vec3 a = data.intersectPoint;
+                      glm::vec3 b(subdividedLights[m].position[0], subdividedLights[m].position[1], subdividedLights[m].position[2]);
+
+                      bool isInShadow = false;
+
+                      // test whether we're shadowed by a renderable
+                      for (int n = 0; n < num_renderables; ++n)
+                      {
+                          if (renderables[n]->intersectSegment(a, b))
+                          {
+                              isInShadow = true;
+                              break;
+                          }
+                      }
+
+                      // if we're not in shadow in terms of this light source, do phong shading
+                      if (!isInShadow)
+                      {
+                          glm::vec3 lightPosition(subdividedLights[m].position[0], subdividedLights[m].position[1], subdividedLights[m].position[2]);
+                          glm::vec3 L = glm::normalize(lightPosition - data.intersectPoint);
+                          float LdotN = glm::dot(L, data.intersectNormal);
+
+                          // clamp dot product
+                          if (LdotN < 0.0f)
+                          {
+                              LdotN = 0.0f;
+                          }
+
+                          glm::vec3 R = glm::normalize(-glm::reflect(L, data.intersectNormal));
+                          glm::vec3 V = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - data.intersectPoint);
+                          float RdotV = glm::dot(R, V);
+
+                          // clamp dot product
+                          if (RdotV < 0.0f)
+                          {
+                              RdotV = 0.0f;
+                          }
+
+                          // calculate color for each channel due to this light source, and add it to the final color
+                          
+                          // red
+                          float r =
+                              subdividedLights[m].color[0] * (data.interpolatedDiffuseColor.x * LdotN + data.interpolatedSpecularColor.x * powf(RdotV, data.interpolatedShininess));
+
+                          pixelColor.x += r;
+                          // clamp if necessary
+                          if (pixelColor.x > 1.0f)
+                          {
+                              pixelColor.x = 1.0f;
+                          }
+
+                          // green
+                          float g = 
+                              subdividedLights[m].color[1] * (data.interpolatedDiffuseColor.y * LdotN + data.interpolatedSpecularColor.y * powf(RdotV, data.interpolatedShininess));
+
+                          pixelColor.y += g;
+                          // clamp if necessary
+                          if (pixelColor.y > 1.0f)
+                          {
+                              pixelColor.y = 1.0f;
+                          }
+
+                          // blue
+                          float b = 
+                              subdividedLights[m].color[2] * (data.interpolatedDiffuseColor.z * LdotN + data.interpolatedSpecularColor.z * powf(RdotV, data.interpolatedShininess));
+
+                          pixelColor.z += b;
+                          // clamp if necessary
+                          if (pixelColor.z > 1.0f)
+                          {
+                              pixelColor.z = 1.0f;
+                          }
+                      }
+                  }
+
+                  if (recursiveDepth <= 0)
+                  {
+                      allPixels[i][j][0] += (unsigned int)(255.0f * pixelColor.x);
+                      allPixels[i][j][1] += (unsigned int)(255.0f * pixelColor.y);
+                      allPixels[i][j][2] += (unsigned int)(255.0f * pixelColor.z);
+                  }
+                  else
+                  {
+                      glm::vec3 newDirection = glm::normalize(glm::reflect(finalRay, data.intersectNormal));
+                      glm::vec3 reflectedColor = recursiveRayTrace(data.intersectPoint, newDirection, recursiveDepth);
+                      glm::vec3 finalColor = (1.0f - recursiveReflection_lambda) * pixelColor + recursiveReflection_lambda * reflectedColor;
+
+                      allPixels[i][j][0] += (unsigned int)(255.0f * finalColor.x);
+                      allPixels[i][j][1] += (unsigned int)(255.0f * finalColor.y);
+                      allPixels[i][j][2] += (unsigned int)(255.0f * finalColor.z);
+                  }
+                  
+              }
+              // else assign the background color
+              else
+              {
+                  allPixels[i][j][0] += 255;
+                  allPixels[i][j][1] += 255;
+                  allPixels[i][j][2] += 255;
+              }
+            }
+            allPixels[i][j][0]/= SSAA_Coefficient*SSAA_Coefficient;
+            allPixels[i][j][1]/= SSAA_Coefficient*SSAA_Coefficient;
+            allPixels[i][j][2]/= SSAA_Coefficient*SSAA_Coefficient;
+
+        }
+    }
+
+  
+}
+
 //MODIFY THIS FUNCTION
 void draw_scene()
 {
@@ -464,7 +665,10 @@ void draw_scene()
     generateAllRaysFromCOP();
 
     // process the scene
-    processScene();
+    if(SSAAA_RANDOM)
+        processScene_randomized();
+    else
+        processScene();
 
   //a simple test output
   for(unsigned int x=0; x<WIDTH; x++)
@@ -501,17 +705,6 @@ void plot_pixel(int x, int y, unsigned char r, unsigned char g, unsigned char b)
     plot_pixel_jpeg(x,y,r,g,b);
 }
 
-// void save_jpg()
-// {
-//   printf("Saving JPEG file: %s\n", filename);
-
-//   ImageIO img(WIDTH, HEIGHT, 3, &buffer[0][0][0]);
-//   if (img.save(filename, ImageIO::FORMAT_JPEG) != ImageIO::OK)
-//     printf("Error in Saving\n");
-//   else 
-//     printf("File saved Successfully\n");
-// }
-
 void save_png()
 {
     png::image< png::rgb_pixel > image(WIDTH, HEIGHT);
@@ -519,11 +712,11 @@ void save_png()
     {
         for (png::uint_32 x = 0; x < image.get_width(); ++x)
         {
-            image[y][x] = png::rgb_pixel(buffer[x][y][0], buffer[x][y][1], buffer[x][y][2]);
+            image[HEIGHT-y-1][x] = png::rgb_pixel(buffer[y][x][0], buffer[y][x][1], buffer[y][x][2]);
             // non-checking equivalent of image.set_pixel(x, y, ...);
         }
     }
-    image.write("rgb.png");
+    image.write(filename);
 }
 
 void parse_check(const char *expected, char *found)
@@ -537,6 +730,14 @@ void parse_check(const char *expected, char *found)
 }
 
 void parse_doubles(FILE* file, const char *check, double p[3])
+{
+  char str[100];
+  fscanf(file,"%s",str);
+  parse_check(check,str);
+  fscanf(file,"%lf %lf %lf",&p[0],&p[1],&p[2]);
+  printf("%s %lf %lf %lf\n",check,p[0],p[1],p[2]);
+}
+void read_doubles(FILE* file, const char *check, double p[3])
 {
   char str[100];
   fscanf(file,"%s",str);
@@ -605,7 +806,8 @@ int loadScene(char *argv)
     else if(strcasecmp(type,"sphere")==0)
     {
       printf("found sphere\n");
-      Sphere* newSphere= new Sphere;
+      Sphere* newSphere= new Sphere();
+      
       parse_doubles(file,"pos:",newSphere->position);
       parse_rad(file,&newSphere->radius);
       parse_doubles(file,"dif:",newSphere->color_diffuse);
