@@ -10,10 +10,11 @@
 
 #include "glm/glm.hpp"
 
-#include "png++/png.hpp"
+#include "lodepng.h"
 #include <math.h>
 #include <vector>
 #include <random>
+#include <iostream>
 
 #define PI 3.14159265
 

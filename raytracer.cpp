@@ -685,18 +685,29 @@ void plot_pixel(int x, int y, unsigned char r, unsigned char g, unsigned char b)
     buffer[y][x][2] = b;
 }
 
+void encodeOneStep(const char* filename, std::vector<unsigned char>& image, unsigned width, unsigned height) {
+    //Encode the image
+    unsigned error = lodepng::encode(filename, image, width, height);
+
+    //if there's an error, display it
+    if(error) std::cout << "encoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
+}
+
 void save_png()
 {
-    png::image< png::rgb_pixel > image(WIDTH, HEIGHT);
-    for (png::uint_32 y = 0; y < image.get_height(); ++y)
+    std::vector<unsigned char> image;
+    for(unsigned y = 0; y < HEIGHT; y++)
     {
-        for (png::uint_32 x = 0; x < image.get_width(); ++x)
+        for(unsigned x = 0; x < WIDTH; x++)
         {
-            image[HEIGHT-y-1][x] = png::rgb_pixel(buffer[y][x][0], buffer[y][x][1], buffer[y][x][2]);
-            // non-checking equivalent of image.set_pixel(x, y, ...);
+            image.push_back((unsigned char)buffer[y][x][0]);
+            image.push_back((unsigned char)buffer[y][x][1]);
+            image.push_back((unsigned char)buffer[y][x][2]);
+            image.push_back(255);
         }
     }
-    image.write(filename);
+
+    encodeOneStep(filename, image, WIDTH, HEIGHT);
 }
 
 void parse_check(const char *expected, char *found)
@@ -826,11 +837,13 @@ int loadScene(char *argv)
 
 int main(int argc, char ** argv)
 {
-  if ((argc < 2) || (argc > 3))
+  if (argc != 3)
   {  
-    printf ("Usage: %s <input scenefile>\n", argv[0]);
+    printf ("Usage: %s <input scenefile> <output pngname>\n", argv[0]);
     exit(0);
   }
+
+  filename = argv[2];
 
   loadScene(argv[1]);
   draw_scene();

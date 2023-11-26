@@ -1,11 +1,10 @@
 CC = g++
-CFLAGS = -Ofast -c -I./glm  -I./libs/libpng/include -I./libs/libpng/lib  -I./png++ 
-LDFLAGS = -static-libgcc -static-libstdc++ -I./libs/libpng/include -L./libs/libpng/lib -I./glm -I./png++ -lpng
+CFLAGS = -std=c++11 -Ofast -c -I./glm
 
 all: raytracer
 
 raytracer: raytracer.o Sphere.o Triangle.o
-	$(CC) -o raytracer raytracer.o Sphere.o Triangle.o $(LDFLAGS)
+	$(CC) -o raytracer lodepng.cpp raytracer.o Sphere.o Triangle.o
 
 raytracer.o: raytracer.cpp raytracer.h Renderable.h
 	$(CC) $(CFLAGS) raytracer.cpp
