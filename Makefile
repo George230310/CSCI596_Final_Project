@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Ofast -c -I./glm -I./png++ `libpng-config --cflags`
+CFLAGS = -std=c++11 -Ofast -c -I./glm -I./png++ `libpng-config --cflags`
 LDFLAGS = -lGL -lGLU -lglut -I./glm -I./png++ `libpng-config --ldflags`
 
 all: raytracer
