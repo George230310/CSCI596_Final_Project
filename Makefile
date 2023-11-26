@@ -1,6 +1,7 @@
 CC = g++
-CFLAGS = -std=c++11 -Ofast -c -I./glm -I./png++ `libpng-config --cflags`
-LDFLAGS = -lGL -lGLU -lglut -I./glm -I./png++ `libpng-config --ldflags`
+CC = g++
+CFLAGS = -std=c++11 -Ofast -c -I./glm  -I./libs/libpng/include -I./libs/libpng/lib  -I./png++ `libpng-config --cflags`
+LDFLAGS = -lGL -lGLU -lglut -lpng -I./libs/libpng/include -L./libs/libpng/lib -I./glm -I./png++ `libpng-config --ldflags`
 
 all: raytracer
 
