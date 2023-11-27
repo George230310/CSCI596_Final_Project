@@ -848,5 +848,6 @@ int main(int argc, char ** argv)
   loadScene(argv[1]);
   draw_scene();
   save_png();
+  printf("DONE\n");
 }
 
