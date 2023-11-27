@@ -8,9 +8,9 @@
   #define strcasecmp _stricmp
 #endif
 
-#include "glm/glm.hpp"
+#include "libs/glm/glm.hpp"
 
-#include "lodepng.h"
+#include "libs/lodepng/lodepng.h"
 #include <math.h>
 #include <vector>
 #include <random>

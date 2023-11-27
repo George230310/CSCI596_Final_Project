@@ -8,7 +8,7 @@
 #include "Renderable.h"
 #include "Sphere.cpp"
 #include "Triangle.cpp"
-#include "glm/gtc/random.hpp"
+#include "libs/glm/gtc/random.hpp"
 
 char * filename = NULL;
 int mode = MODE_DISPLAY;
