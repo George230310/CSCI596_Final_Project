@@ -1,4 +1,4 @@
-# CSCI596 Final Project
+# CSCI596 Final Project: Parallel Ray Tracer
 
 ## Authors: Suvi Marathe, Leyu Xu
 
@@ -37,4 +37,17 @@ vertices of the triangle using the subarea ratios of the sub-triangles formed by
 ![Ray-Triangle Intersection](https://la.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/49670/versions/3/screenshot.jpg)  
 *A Diagram for Ray Triangle Intersection Cited from MathWorks*  
 
-#### Anti-aliasing
+#### Anti-aliasing (Super-sampling AA vs. Random-sampling AA)
+In Computer Graphics, aliasing refers to the visual artifacts that affect the quality of the images. In our particular case of ray-traced images, aliasing is presented as sharp step-like outlining of the 
+rendered 3D objects. Aliasing occurs primarily because of insufficient sampling of the high-frequency details in the scene. The same concept lies behind Nyquist Theorem, a famous theorem in digital signal processing 
+that states the relation between sample rate and signal bandwidth. The address aliasing, we have come up with 2 anti-aliasing (AA) algorithms. The first method is called super-sampling AA, in which each grid in front 
+of the camera position is subdivided into many smaller grids, and a ray is fired through each subdivided grid. The final result of the original grid will be the average of the colors given by all the subdivided grids. 
+This method is kind of a brute-force approach. It yields high-quality result but is more time-consuming. An alternative method we have come up with is the Random-sampling AA, in which we fire multiple rays through a 
+grid such that their directions are distributed as a normal distribution. This method runs faster under equivalent hardware but produces more aliasing compared to super-sampling AA. We're currently still experimenting 
+with these methods to try to find an equilibrium.  
+![SSAA](readme_images/spheres_casting_soft_shadows_on_each_other_SSAA.png)  
+*3D Scene Produced by SSAA*  
+![Random AA](readme_images/spheres_casting_soft_shadows_on_each_other_RandomAA.png)  
+*Same 3D Scene Produced by Random AA*  
+
+#### Soft Shadow
