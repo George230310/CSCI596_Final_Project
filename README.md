@@ -21,3 +21,6 @@ the hit point is blocked from the light source, and is therefore not lighted (it
 ![Ray Tracing Illustration](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/pictures/2018/RayTracing/ray-tracing-image-1.jpg)  
 *A Diagram for Ray Tracing Excerpted from NVIDIA's official website*  
 
+### Our Core Implementations
+**Ray-Sphere Intersection & Ray-Triangle Intersection**  
+At the heart of our ray tracer lies the 
