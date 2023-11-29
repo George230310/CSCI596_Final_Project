@@ -60,3 +60,11 @@ a normal distribution around the original light source, with intensity divided b
 *3D Scene Produced with Soft Shadow Off*  
 
 #### Recursive Ray Tracing
+To even more realistically render a scene, we may also want to account for multiple bounces of a light beam across multiple objects. To this end, we can utilized a method named recursive ray tracing. The basic 
+idea is that when a ray from the camera position hits an object, we also want to fire another reflection ray off the hit point. If this reflection ray hits another object in the scene, then we know that the light 
+reflected off that object will also contribute to the lighting of this object. We can repeat this process as many times as we want as long as the computational cost is reasonable. The result of recursive ray tracing 
+is shown below, where you can see sort of a mirror surface on the objects.  
+![Recursive Ray Tracing](readme_images/Reflections.png)  
+*3D Scene Produced with Recursive Ray Tracing*  
+
+#### Plan for Parallalization
