@@ -71,6 +71,8 @@ is shown below, where you can see sort of a mirror surface on the objects.
 ### Plan for Parallalization
 To parallelize our algorithm, we will be experimenting with MPI and OpenMP for implementing parallel + multithreaded CPU ray tracer. Since the result of each pixel in a ray traced image is calculated independently from one 
 another, we will experiment with various patterns of dividing the screen space. We are curious to explore whether different ways of screen divisions will significantly impact the runtime of the algorithm, probably due to 
-cache read and misses. We will conduct scalability tests on our final product and plot the graphs for examining the efficiency. Lastly, if time permits, we will experiment with GPU ray tracing using CUDA.  
+cache read and misses. A disadvantage of the above approach is that if the scene is sparse, some threads return early and remain idle while the others have to do a majority of the work.
+To address this, we also want to explore a worker queue model which would have higher overhead but we expect it would do better.
+We will conduct scalability tests on our final product and plot the graphs for examining the efficiency. Lastly, if time permits, we will experiment with GPU ray tracing using CUDA.  
 ![Plan](readme_images/CS596_Plan.drawio.png)  
 *One Way of Dividing Screen Space*  
