@@ -67,7 +67,7 @@ is shown below, where you can see sort of a mirror surface on the objects.
 ![Recursive Ray Tracing](readme_images/Reflections.png)  
 *3D Scene Produced with Recursive Ray Tracing*  
 
-#### Plan for Parallalization
+### Plan for Parallalization
 To parallelize our algorithm, we will be experimenting with MPI and OpenMP for implementing parallel + multithreaded CPU ray tracer. Since the result of each pixel in a ray traced image is calculated independently from one 
 another, we will experiment with various patterns of dividing the screen space. We are curious to explore whether different ways of screen divisions will significantly impact the runtime of the algorithm, probably due to 
 cache read and misses. We will conduct scalability tests on our final product and plot the graphs for examining the efficiency. Lastly, if time permits, we will experiment with GPU ray tracing using CUDA.  
