@@ -19,7 +19,7 @@ be fired from the hit point towards the point light source. If this second ray r
 other objects and its color should be evaluated based on its material property and the color of the light source. Yet, if the second ray hits some other object along the way, then we know that 
 the hit point is blocked from the light source, and is therefore not lighted (its corresponding pixel will be completely black with only a single point light source).  
 ![Ray Tracing Illustration](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/pictures/2018/RayTracing/ray-tracing-image-1.jpg)  
-*A Diagram for Ray Tracing Excerpted from NVIDIA's official website*  
+*A Diagram for Ray Tracing Cited from NVIDIA's official website*  
 
 ### Our Core Implementations
 #### Ray-Sphere Intersection & Ray-Triangle Intersection
@@ -29,12 +29,12 @@ a point, and what we want to know is whether the closest distance between any po
 have at least one intersection (usually we have two, one coming into the sphere and one going out). Then, with some more mathematical efforts, we're able to get the exact positions of the intersections 
 and our algorithm will choose the closest one to return as the result.  
 ![Ray-Sphere Intersection](https://www.scratchapixel.com/images/ray-simple-shapes/rayspherecases.png?)  
-*A Diagram for Ray Sphere Intersection Excerpted from Scratchapixel 3.0*  
+*A Diagram for Ray Sphere Intersection Cited from Scratchapixel 3.0*  
 
 When it comes to the ray-triangle intersection algorithm, things would get a bit more complicated. First of all, the algorithm will calculate if the ray intersect with the plane on which the triangle 
-resides. If it does, then the algorithm will calculate the **barycentric coordinates** of intersection point. A set if barycentric coordinates express the intersection point as a combination of the three 
+resides. If it does, then the algorithm will calculate the **barycentric coordinates** of intersection point. A set of barycentric coordinates express the intersection point as a combination of the three 
 vertices of the triangle using the subarea ratios of the sub-triangles formed by the intersection point and any two vertices.  
 ![Ray-Triangle Intersection](https://la.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/49670/versions/3/screenshot.jpg)  
-*A Diagram for Ray Triangle Intersection Excerpted from MathWorks*  
+*A Diagram for Ray Triangle Intersection Cited from MathWorks*  
 
 #### Anti-aliasing
