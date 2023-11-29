@@ -22,7 +22,7 @@ the hit point is blocked from the light source, and is therefore not lighted (it
 *A Diagram for Ray Tracing Excerpted from NVIDIA's official website*  
 
 ### Our Core Implementations
-**Ray-Sphere Intersection & Ray-Triangle Intersection**  
+#### Ray-Sphere Intersection & Ray-Triangle Intersection
 At the heart of our ray tracer lies the intersection algorithm between the ray itself and other 3D objects. Since spheres and triangles are some of the most common 3D objects, we are interested in 
 developing algorithms that can check ray-sphere and ray-triangle intersections. For the ray-sphere intersection algorithm, the basic idea is very simple. Imagine the center of the sphere being 
 a point, and what we want to know is whether the closest distance between any point on the ray and the center of the sphere is less or equal to the radius of the sphere. If it is, then we know that we 
@@ -31,3 +31,10 @@ and our algorithm will choose the closest one to return as the result.
 ![Ray-Sphere Intersection](https://www.scratchapixel.com/images/ray-simple-shapes/rayspherecases.png?)  
 *A Diagram for Ray Sphere Intersection Excerpted from Scratchapixel 3.0*  
 
+When it comes to the ray-triangle intersection algorithm, things would get a bit more complicated. First of all, the algorithm will calculate if the ray intersect with the plane on which the triangle 
+resides. If it does, then the algorithm will calculate the **barycentric coordinates** of intersection point. A set if barycentric coordinates express the intersection point as a combination of the three 
+vertices of the triangle using the subarea ratios of the sub-triangles formed by the intersection point and any two vertices.  
+![Ray-Triangle Intersection](https://la.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/49670/versions/3/screenshot.jpg)  
+*A Diagram for Ray Triangle Intersection Excerpted from MathWorks*  
+
+#### Anti-aliasing
