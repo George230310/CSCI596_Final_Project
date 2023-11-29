@@ -54,8 +54,8 @@ with these methods to try to find an equilibrium.
 In reality, we will never have an actual point light source. Therefore, the shadows we observe will never have outlines as harsh as those produced by point light ray-tracing simulations. In order to render as 
 realistically as possible, we have developed a simple method to produce soft shadows in our ray tracer. Basically, for every point light source, we subdivide the it into many point light sources that form 
 a normal distribution around the original light source, with intensity divided by the number of subdivisions. This way, we are roughly simulating an area light with sufficiently large number of subdivisions.  
-![Soft Shadow](readme_images/soft_shadow_on.jpg)
+![Soft Shadow](readme_images/soft_shadow_on.jpg)  
 *3D Scene Produced with Soft Shadow On*  
-![Hard Shadow](readme_images/soft_shadow_off.jpg)
+![Hard Shadow](readme_images/soft_shadow_off.jpg)  
 *3D Scene Produced with Soft Shadow Off*  
 
