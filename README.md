@@ -32,7 +32,7 @@ and our algorithm will choose the closest one to return as the result.
 *A Diagram for Ray Sphere Intersection Cited from Scratchapixel 3.0*  
 
 When it comes to the ray-triangle intersection algorithm, things would get a bit more complicated. First of all, the algorithm will calculate if the ray intersect with the plane on which the triangle 
-resides. If it does, then the algorithm will calculate the **barycentric coordinates** of intersection point. A set of barycentric coordinates express the intersection point as a combination of the three 
+resides. If it does, then the algorithm will calculate the **barycentric coordinates** of intersection point. A set of barycentric coordinates expresses the intersection point as a combination of the three 
 vertices of the triangle using the subarea ratios of the sub-triangles formed by the intersection point and any two vertices.  
 ![Ray-Triangle Intersection](https://la.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/49670/versions/3/screenshot.jpg)  
 *A Diagram for Ray Triangle Intersection Cited from MathWorks*  
