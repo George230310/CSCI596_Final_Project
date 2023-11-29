@@ -48,7 +48,7 @@ with these methods to try to find an equilibrium.
 ![SSAA](readme_images/spheres_casting_soft_shadows_on_each_other_SSAA.png)  
 *3D Scene Produced by SSAA*  
 ![Random AA](readme_images/spheres_casting_soft_shadows_on_each_other_RandomAA.png)  
-*Same 3D Scene Produced by Random AA*  
+*3D Scene Produced by Random AA*  
 
 #### Soft Shadow
 In reality, we will never have an actual point light source. Therefore, the shadows we observe will never have outlines as harsh as those produced by point light ray-tracing simulations. In order to render as 
@@ -59,3 +59,4 @@ a normal distribution around the original light source, with intensity divided b
 ![Hard Shadow](readme_images/soft_shadow_off.jpg)  
 *3D Scene Produced with Soft Shadow Off*  
 
+#### Recursive Ray Tracing
