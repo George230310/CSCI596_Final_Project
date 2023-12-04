@@ -9,6 +9,8 @@
 #include "Sphere.cpp"
 #include "Triangle.cpp"
 #include "libs/glm/gtc/random.hpp"
+#include <omp.h>
+#include <chrono>
 
 char * filename = NULL;
 int mode = MODE_DISPLAY;
@@ -43,14 +45,14 @@ void plot_pixel(int x,int y,unsigned char r,unsigned char g,unsigned char b);
 
 
 // ****************************** PROGRAM PARAMETERS *************************************
-const unsigned int SSAA_Coefficient = 10;
+const unsigned int SSAA_Coefficient = 20;
 
 const bool UseSoftShadow = false;
 const unsigned int numOfLightSubdivisions = 100;
 const float areaLightRadius = 3.0f;
 
-const float recursiveReflection_lambda = 0.3f; // indicates how much the reflection contributes to the lighting
-const int recursiveDepth = 0;
+const float recursiveReflection_lambda = 0.1f; // indicates how much the reflection contributes to the lighting
+const int recursiveDepth = 1;
 // ***************************************************************************************
 
 
@@ -270,7 +272,14 @@ glm::vec3 recursiveRayTrace(const glm::vec3& ray_o, const glm::vec3& ray_d, int 
         }
         else
         {
-            return glm::vec3(0.0f, 0.0f, 0.0f);
+            // // Bad stuff to preserve behaviour
+            // if(depth == 1)
+            //     return glm::vec3(1.0f, 1.0f, 1.0f);
+            // else
+            //     return glm::vec3(0.0f, 0.0f, 0.0f);
+            return glm::vec3(1.0f, 1.0f, 1.0f);
+
+
         }
     }
 }
@@ -508,7 +517,10 @@ void processScene_randomized()
     glm::vec3 pixelWidthOffset = (topRightScreenCorner - topLeftScreenCorner) / ((float)WIDTH);
     glm::vec3 pixelHeightOffset = (bottomRightScreenCorner - topRightScreenCorner) / ((float)HEIGHT);
 
+    glm::vec3 ORIGIN(0.0f,0.0f,0.0f);
+
     // go through each pixel
+    #pragma omp parallel for num_threads(16) collapse(2)
     for (int i = 0; i < WIDTH ; ++i)
     {
         for (int j = 0; j < HEIGHT; ++j)
@@ -518,133 +530,10 @@ void processScene_randomized()
             {
               glm::vec3 randomOffset  = glm::vec3(glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f));
               glm::vec3 finalRay = baseRay + randomOffset;
-              IntersectData data;
-              IntersectData tempData;
-              // go through all renderables in scene and find the intersection with the smallest t
-              for (int k = 0; k < num_renderables; ++k)
-              {
-                  if(renderables[k]->intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), finalRay, tempData))
-                  {
-                      // if we see a smaller t update intersection data
-                      if (tempData.t < data.t)
-                      {
-                          data = tempData;
-                      }
-                  }
-              }
-              // if we find intersection
-              if (data.t < FLT_MAX)
-              {
-                  glm::vec3 pixelColor(0.0f, 0.0f, 0.0f);
-
-                  // add ambient color once
-                  pixelColor.x += ambient_light[0];
-                  pixelColor.y += ambient_light[1];
-                  pixelColor.z += ambient_light[2];
-
-                  // go through each light source and cast a shadow ray
-                  for (unsigned int m = 0; m < subdividedLights.size(); ++m)
-                  {
-                      glm::vec3 a = data.intersectPoint;
-                      glm::vec3 b(subdividedLights[m].position[0], subdividedLights[m].position[1], subdividedLights[m].position[2]);
-
-                      bool isInShadow = false;
-
-                      // test whether we're shadowed by a renderable
-                      for (int n = 0; n < num_renderables; ++n)
-                      {
-                          if (renderables[n]->intersectSegment(a, b))
-                          {
-                              isInShadow = true;
-                              break;
-                          }
-                      }
-
-                      // if we're not in shadow in terms of this light source, do phong shading
-                      if (!isInShadow)
-                      {
-                          glm::vec3 lightPosition(subdividedLights[m].position[0], subdividedLights[m].position[1], subdividedLights[m].position[2]);
-                          glm::vec3 L = glm::normalize(lightPosition - data.intersectPoint);
-                          float LdotN = glm::dot(L, data.intersectNormal);
-
-                          // clamp dot product
-                          if (LdotN < 0.0f)
-                          {
-                              LdotN = 0.0f;
-                          }
-
-                          glm::vec3 R = glm::normalize(-glm::reflect(L, data.intersectNormal));
-                          glm::vec3 V = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - data.intersectPoint);
-                          float RdotV = glm::dot(R, V);
-
-                          // clamp dot product
-                          if (RdotV < 0.0f)
-                          {
-                              RdotV = 0.0f;
-                          }
-
-                          // calculate color for each channel due to this light source, and add it to the final color
-                          
-                          // red
-                          float r =
-                              subdividedLights[m].color[0] * (data.interpolatedDiffuseColor.x * LdotN + data.interpolatedSpecularColor.x * powf(RdotV, data.interpolatedShininess));
-
-                          pixelColor.x += r;
-                          // clamp if necessary
-                          if (pixelColor.x > 1.0f)
-                          {
-                              pixelColor.x = 1.0f;
-                          }
-
-                          // green
-                          float g = 
-                              subdividedLights[m].color[1] * (data.interpolatedDiffuseColor.y * LdotN + data.interpolatedSpecularColor.y * powf(RdotV, data.interpolatedShininess));
-
-                          pixelColor.y += g;
-                          // clamp if necessary
-                          if (pixelColor.y > 1.0f)
-                          {
-                              pixelColor.y = 1.0f;
-                          }
-
-                          // blue
-                          float b = 
-                              subdividedLights[m].color[2] * (data.interpolatedDiffuseColor.z * LdotN + data.interpolatedSpecularColor.z * powf(RdotV, data.interpolatedShininess));
-
-                          pixelColor.z += b;
-                          // clamp if necessary
-                          if (pixelColor.z > 1.0f)
-                          {
-                              pixelColor.z = 1.0f;
-                          }
-                      }
-                  }
-
-                  if (recursiveDepth <= 0)
-                  {
-                      allPixels[i][j][0] += (unsigned int)(255.0f * pixelColor.x);
-                      allPixels[i][j][1] += (unsigned int)(255.0f * pixelColor.y);
-                      allPixels[i][j][2] += (unsigned int)(255.0f * pixelColor.z);
-                  }
-                  else
-                  {
-                      glm::vec3 newDirection = glm::normalize(glm::reflect(finalRay, data.intersectNormal));
-                      glm::vec3 reflectedColor = recursiveRayTrace(data.intersectPoint, newDirection, recursiveDepth);
-                      glm::vec3 finalColor = (1.0f - recursiveReflection_lambda) * pixelColor + recursiveReflection_lambda * reflectedColor;
-
-                      allPixels[i][j][0] += (unsigned int)(255.0f * finalColor.x);
-                      allPixels[i][j][1] += (unsigned int)(255.0f * finalColor.y);
-                      allPixels[i][j][2] += (unsigned int)(255.0f * finalColor.z);
-                  }
-                  
-              }
-              // else assign the background color
-              else
-              {
-                  allPixels[i][j][0] += 255;
-                  allPixels[i][j][1] += 255;
-                  allPixels[i][j][2] += 255;
-              }
+              glm::vec3 finalColor = recursiveRayTrace(ORIGIN, finalRay, recursiveDepth+1);
+              allPixels[i][j][0] += finalColor.x * 255 ;
+              allPixels[i][j][1] += finalColor.y * 255;
+              allPixels[i][j][2] += finalColor.z * 255;
             }
             allPixels[i][j][0]/= SSAA_Coefficient*SSAA_Coefficient;
             allPixels[i][j][1]/= SSAA_Coefficient*SSAA_Coefficient;
@@ -846,8 +735,11 @@ int main(int argc, char ** argv)
   filename = argv[2];
 
   loadScene(argv[1]);
+  auto start = std::chrono::high_resolution_clock::now();
   draw_scene();
+  auto stop = std::chrono::high_resolution_clock::now();
   save_png();
   printf("DONE\n");
+  printf("%lld ms \n",std::chrono::duration_cast<std::chrono::milliseconds>(stop - start));
 }
 
