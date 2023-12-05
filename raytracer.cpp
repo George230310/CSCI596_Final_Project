@@ -9,13 +9,15 @@
 #include "Sphere.cpp"
 #include "Triangle.cpp"
 #include "libs/glm/gtc/random.hpp"
+#include "mpi.h"
 
 char * filename = NULL;
 int mode = MODE_DISPLAY;
 unsigned int buffer[HEIGHT][WIDTH][3];
 
-
-
+// parallelization
+int myId;
+int nProc;
 
 struct Light
 {
@@ -450,6 +452,18 @@ void processScene()
     }
 }
 
+// Parallelization: partition the scene horizontally
+
+void processScene_manager()
+{
+    
+}
+
+void processScene_worker()
+{
+
+}
+
 // function to generate Base ray from camera origin to pixel on virtual screen
 glm::vec3 generateBaseRay(int i, int j)
 {
@@ -844,10 +858,30 @@ int main(int argc, char ** argv)
   }
 
   filename = argv[2];
-
   loadScene(argv[1]);
-  draw_scene();
-  save_png();
+
+  // generate all rays from COP
+  generateAllRaysFromCOP();
+
+  // MPI initialization
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myId);
+  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+
+  if(myId == 0)
+  {
+    processScene_manager();
+
+    // save image
+    save_png();
+  }
+  else
+  {
+    processScene_worker();
+  }
+
+
   printf("DONE\n");
+  MPI_Finalize();
 }
 
