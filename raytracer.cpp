@@ -635,9 +635,9 @@ void processScene_manager()
             {
                 int row = a + rowOffset;
                 int index = 3 * (row * scaledImageWidth + b);
-                allPixels[b][a][0] = recvPixels[index];
-                allPixels[b][a][1] = recvPixels[index + 1];
-                allPixels[b][a][2] = recvPixels[index + 2];
+                superScaledAllPixels[b][a][0] = recvPixels[index];
+                superScaledAllPixels[b][a][1] = recvPixels[index + 1];
+                superScaledAllPixels[b][a][2] = recvPixels[index + 2];
             }
         }
     }
@@ -696,9 +696,9 @@ void processScene_worker()
         {
             int row = a + rowOffset;
             int index = 3 * (row * scaledImageWidth + b);
-            sendPixels[index] = allPixels[b][a][0];
-            sendPixels[index + 1] = allPixels[b][a][1];
-            sendPixels[index + 2] = allPixels[b][a][2];
+            sendPixels[index] = superScaledAllPixels[b][a][0];
+            sendPixels[index + 1] = superScaledAllPixels[b][a][1];
+            sendPixels[index + 2] = superScaledAllPixels[b][a][2];
         }
     }
 
