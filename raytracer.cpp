@@ -622,7 +622,11 @@ void processScene_manager()
     int rowsPerBlock = scaledImageHeight / nProc;
     int leftOverRows = scaledImageHeight % nProc;
     renderBlock(0, 0, scaledImageWidth, rowsPerBlock - 1);
-    renderBlock(0, scaledImageHeight - leftOverRows + 1, scaledImageWidth, scaledImageHeight - 1);
+
+    if(leftOverRows > 0)
+    {
+        renderBlock(0, scaledImageHeight - leftOverRows + 1, scaledImageWidth, scaledImageHeight - 1);
+    }
 
     // receive from workers
     for(int i = 1; i < nProc; i++)
