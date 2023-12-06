@@ -1,4 +1,4 @@
-CC = g++
+CC = mpicc
 CFLAGS = -std=c++11 -Ofast -c -I./libs/glm
 
 all: raytracer

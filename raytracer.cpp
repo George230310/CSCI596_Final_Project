@@ -452,16 +452,257 @@ void processScene()
     }
 }
 
-// Parallelization: partition the scene horizontally
+// function to render a rectangular block of the super scaled image from indicated start column & row to end column & row
+void renderBlock(int startCol, int startRow, int endCol, int endRow)
+{
+    int rayIndex = (startCol + 1) * (startRow + 1) - 1;
+
+    // go through each pixel
+    for (int i = startCol; i < endCol; ++i)
+    {
+        for (int j = startRow; j < endRow; ++j)
+        {
+            // go through all renderables in scene and find the intersection with the smallest t
+            IntersectData data;
+            IntersectData tempData;
+            for (int k = 0; k < num_renderables; ++k)
+            {
+                if(renderables[k]->intersectRay(glm::vec3(0.0f, 0.0f, 0.0f), normalizedScreenRaysDirections[rayIndex], tempData))
+                {
+                    // if we see a smaller t update intersection data
+                    if (tempData.t < data.t)
+                    {
+                        data = tempData;
+                    }
+                }
+            }
+
+            // if we find intersection
+            if (data.t < FLT_MAX)
+            {
+                glm::vec3 pixelColor(0.0f, 0.0f, 0.0f);
+
+                // add ambient color once
+                pixelColor.x += ambient_light[0];
+                pixelColor.y += ambient_light[1];
+                pixelColor.z += ambient_light[2];
+
+                // go through each light source and cast a shadow ray
+                for (unsigned int m = 0; m < subdividedLights.size(); ++m)
+                {
+                    glm::vec3 a = data.intersectPoint;
+                    glm::vec3 b(subdividedLights[m].position[0], subdividedLights[m].position[1], subdividedLights[m].position[2]);
+
+                    bool isInShadow = false;
+
+                    // test whether we're shadowed by a renderable
+                    for (int n = 0; n < num_renderables; ++n)
+                    {
+                        if (renderables[n]->intersectSegment(a, b))
+                        {
+                            isInShadow = true;
+                            break;
+                        }
+                    }
+
+                    // if we're not in shadow in terms of this light source, do phong shading
+                    if (!isInShadow)
+                    {
+                        glm::vec3 lightPosition(subdividedLights[m].position[0], subdividedLights[m].position[1], subdividedLights[m].position[2]);
+                        glm::vec3 L = glm::normalize(lightPosition - data.intersectPoint);
+                        float LdotN = glm::dot(L, data.intersectNormal);
+
+                        // clamp dot product
+                        if (LdotN < 0.0f)
+                        {
+                            LdotN = 0.0f;
+                        }
+
+                        glm::vec3 R = glm::normalize(-glm::reflect(L, data.intersectNormal));
+                        glm::vec3 V = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - data.intersectPoint);
+                        float RdotV = glm::dot(R, V);
+
+                        // clamp dot product
+                        if (RdotV < 0.0f)
+                        {
+                            RdotV = 0.0f;
+                        }
+
+                        // calculate color for each channel due to this light source, and add it to the final color
+                        
+                        // red
+                        float r =
+                            subdividedLights[m].color[0] * (data.interpolatedDiffuseColor.x * LdotN + data.interpolatedSpecularColor.x * powf(RdotV, data.interpolatedShininess));
+
+                        pixelColor.x += r;
+                        // clamp if necessary
+                        if (pixelColor.x > 1.0f)
+                        {
+                            pixelColor.x = 1.0f;
+                        }
+
+                        // green
+                        float g = 
+                            subdividedLights[m].color[1] * (data.interpolatedDiffuseColor.y * LdotN + data.interpolatedSpecularColor.y * powf(RdotV, data.interpolatedShininess));
+
+                        pixelColor.y += g;
+                        // clamp if necessary
+                        if (pixelColor.y > 1.0f)
+                        {
+                            pixelColor.y = 1.0f;
+                        }
+
+                        // blue
+                        float b = 
+                            subdividedLights[m].color[2] * (data.interpolatedDiffuseColor.z * LdotN + data.interpolatedSpecularColor.z * powf(RdotV, data.interpolatedShininess));
+
+                        pixelColor.z += b;
+                        // clamp if necessary
+                        if (pixelColor.z > 1.0f)
+                        {
+                            pixelColor.z = 1.0f;
+                        }
+                    }
+                }
+
+                if (recursiveDepth <= 0)
+                {
+                    superScaledAllPixels[i][j][0] = (unsigned char)(255.0f * pixelColor.x);
+                    superScaledAllPixels[i][j][1] = (unsigned char)(255.0f * pixelColor.y);
+                    superScaledAllPixels[i][j][2] = (unsigned char)(255.0f * pixelColor.z);
+                }
+                else
+                {
+                    glm::vec3 newDirection = glm::normalize(glm::reflect(normalizedScreenRaysDirections[rayIndex], data.intersectNormal));
+                    glm::vec3 reflectedColor = recursiveRayTrace(data.intersectPoint, newDirection, recursiveDepth);
+                    glm::vec3 finalColor = (1.0f - recursiveReflection_lambda) * pixelColor + recursiveReflection_lambda * reflectedColor;
+
+                    superScaledAllPixels[i][j][0] = (unsigned char)(255.0f * finalColor.x);
+                    superScaledAllPixels[i][j][1] = (unsigned char)(255.0f * finalColor.y);
+                    superScaledAllPixels[i][j][2] = (unsigned char)(255.0f * finalColor.z);
+                }
+                
+            }
+            // else assign the background color
+            else
+            {
+                superScaledAllPixels[i][j][0] = 255;
+                superScaledAllPixels[i][j][1] = 255;
+                superScaledAllPixels[i][j][2] = 255;
+            }
+
+            ++rayIndex;
+        }
+    }
+}
+
+// Parallelization: partition the scene into horizontal strips
 
 void processScene_manager()
 {
-    
+    double renderTime = 0.0f;
+    double startTime;
+    double finishTime;
+
+    startTime = MPI_WTime();
+
+    // sub-divide light sources
+    SubdivideLightSources();
+
+    // process the scene
+    MPI_Status status;
+    int scaledImageHeight = HEIGHT * SSAA_Coefficient;
+    int scaledImageWidth = WIDTH * SSAA_Coefficient;
+
+    // buffer to receive pixels from other processes
+    int bufferItemCount = 3 * scaledImageHeight * scaledImageWidth;
+    int* recvPixels = new int[bufferItemCount];
+
+    // TODO: the manager renders the first strip and any left overs, probably better way to do this
+    int rowsPerBlock = scaledImageHeight / nProc;
+    int leftOverRows = scaledImageHeight % nProc;
+    renderBlock(0, 0, scaledImageWidth, rowsPerBlock - 1);
+    renderBlock(0, scaledImageHeight - leftOverRows + 1, scaledImageWidth, scaledImageHeight - 1);
+
+    // receive from workers
+    for(int i = 1; i < nProc; i++)
+    {
+        MPI_Recv(recvPixels, bufferItemCount, MPI_INT, i, i, MPI_COMM_WORLD, &status);
+        int rowOffset = i * rowsPerBlock;
+        for(int a = 0; a < rowsPerBlock; a++)
+        {
+            for(int b = 0; b < scaledImageWidth; b++)
+            {
+                int row = a + rowOffset;
+                int index = 3 * (row * scaledImageWidth + b);
+                allPixels[b][a][0] = recvPixels[index];
+                allPixels[b][a][1] = recvPixels[index + 1];
+                allPixels[b][a][2] = recvPixels[index + 2];
+            }
+        }
+    }
+
+    // TODO: manager solely responsible for scale down now, but there's definitely better way
+    for (int i = 0, m = 0; i < WIDTH && m < WIDTH * SSAA_Coefficient - 1; ++i, m += SSAA_Coefficient)
+    {
+        for (int j = 0, n = 0; j < HEIGHT && n < HEIGHT * SSAA_Coefficient - 1; ++j, n += SSAA_Coefficient)
+        {
+            float divider = (float)SSAA_Coefficient * (float)SSAA_Coefficient;
+            
+            float r = 0.0f;
+            float g = 0.0f;
+            float b = 0.0f;
+
+            for (int u = 0; u < SSAA_Coefficient; ++u)
+            {
+                for (int v = 0; v < SSAA_Coefficient; ++v)
+                {
+                    r += (float)superScaledAllPixels[m + u][n + v][0];
+                    g += (float)superScaledAllPixels[m + u][n + v][1];
+                    b += (float)superScaledAllPixels[m + u][n + v][2];
+                }
+            }
+
+            allPixels[i][j][0] = (unsigned char)(r / divider);
+
+            allPixels[i][j][1] = (unsigned char)(g / divider);
+
+            allPixels[i][j][2] = (unsigned char)(b / divider);
+        }
+    }
+
+    finishTime = MPI_WTime();
+    renderTime = finishTime - startTime;
+    std::cout << "Execution Time: " << renderTime << " seconds" << std::endl;
 }
 
 void processScene_worker()
 {
+    // buffer to send pixels from other processes
+    int scaledImageHeight = HEIGHT * SSAA_Coefficient;
+    int scaledImageWidth = WIDTH * SSAA_Coefficient;
+    int bufferItemCount = 3 * scaledImageHeight * scaledImageWidth;
+    int* sendPixels = new int[bufferItemCount];
 
+    // render my part
+    int rowOffset = myId * rowsPerBlock;
+    int rowsPerBlock = scaledImageHeight / nProc;
+    renderBlock(0, rowOffset, scaledImageWidth, rowOffset + rowsPerBlock - 1);
+
+    // send the result to manager
+    for(int a = 0; a < rowsPerBlock; a++)
+    {
+        for(int b = 0; b < scaledImageWidth; b++)
+        {
+            int row = a + rowOffset;
+            int index = 3 * (row * scaledImageWidth + b);
+            sendPixels[index] = allPixels[b][a][0];
+            sendPixels[index + 1] = allPixels[b][a][1];
+            sendPixels[index + 2] = allPixels[b][a][2];
+        }
+    }
+
+    MPI_Send(sendPixels, bufferItemCount, MPI_INT, 0, myId, MPI_COMM_WORLD);
 }
 
 // function to generate Base ray from camera origin to pixel on virtual screen
@@ -860,7 +1101,7 @@ int main(int argc, char ** argv)
   filename = argv[2];
   loadScene(argv[1]);
 
-  // generate all rays from COP
+  // generate all rays from COP (should be run by all processes)
   generateAllRaysFromCOP();
 
   // MPI initialization
@@ -870,13 +1111,24 @@ int main(int argc, char ** argv)
 
   if(myId == 0)
   {
+    // the manager process
     processScene_manager();
 
-    // save image
+    // plot pixel to the buffer
+    for(unsigned int x=0; x<WIDTH; x++)
+    {
+        for(unsigned int y=0; y<HEIGHT; y++)
+        {
+            plot_pixel(x, y, allPixels[x][y][0], allPixels[x][y][1], allPixels[x][y][2]);
+        }
+    }
+
+    // save image from the buffer
     save_png();
   }
   else
   {
+    // the worker processes
     processScene_worker();
   }
 
