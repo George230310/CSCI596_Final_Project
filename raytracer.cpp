@@ -520,15 +520,17 @@ void processScene_randomized()
     glm::vec3 ORIGIN(0.0f,0.0f,0.0f);
 
     // go through each pixel
-    #pragma omp parallel for num_threads(16) collapse(2)
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < WIDTH ; ++i)
     {
         for (int j = 0; j < HEIGHT; ++j)
         {
+            // printf("%d\n", omp_get_thread_num());
             glm::vec3 baseRay = glm::normalize(topLeftScreenCorner + (float)i * pixelWidthOffset + (float)j * pixelHeightOffset + pixelWidthOffset / 2.0f + pixelHeightOffset / 2.0f);
             for(int l=0;l<SSAA_Coefficient*SSAA_Coefficient;l++)
             {
-              glm::vec3 randomOffset  = glm::vec3(glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f));
+              glm::vec3 randomOffset(0.0f, 0.0f, 0.0f);
+            //   glm::vec3 randomOffset  = glm::vec3(glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f), glm::gaussRand<float>(0.0f,0.008f));
               glm::vec3 finalRay = baseRay + randomOffset;
               glm::vec3 finalColor = recursiveRayTrace(ORIGIN, finalRay, recursiveDepth+1);
               allPixels[i][j][0] += finalColor.x * 255 ;
@@ -735,6 +737,7 @@ int main(int argc, char ** argv)
   filename = argv[2];
 
   loadScene(argv[1]);
+  omp_set_num_threads(16);
   auto start = std::chrono::high_resolution_clock::now();
   draw_scene();
   auto stop = std::chrono::high_resolution_clock::now();
