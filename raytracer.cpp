@@ -604,7 +604,7 @@ void processScene_manager()
     double startTime;
     double finishTime;
 
-    startTime = MPI_WTime();
+    startTime = MPI_Wtime();
 
     // sub-divide light sources
     SubdivideLightSources();
@@ -671,7 +671,7 @@ void processScene_manager()
         }
     }
 
-    finishTime = MPI_WTime();
+    finishTime = MPI_Wtime();
     renderTime = finishTime - startTime;
     std::cout << "Execution Time: " << renderTime << " seconds" << std::endl;
 }
@@ -685,8 +685,8 @@ void processScene_worker()
     int* sendPixels = new int[bufferItemCount];
 
     // render my part
-    int rowOffset = myId * rowsPerBlock;
     int rowsPerBlock = scaledImageHeight / nProc;
+    int rowOffset = myId * rowsPerBlock;
     renderBlock(0, rowOffset, scaledImageWidth, rowOffset + rowsPerBlock - 1);
 
     // send the result to manager
