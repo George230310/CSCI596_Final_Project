@@ -1096,6 +1096,11 @@ int loadScene(char *argv)
 
 int main(int argc, char ** argv)
 {
+  // MPI initialization
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myId);
+  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+
   if (argc != 3)
   {  
     printf ("Usage: %s <input scenefile> <output pngname>\n", argv[0]);
@@ -1107,11 +1112,6 @@ int main(int argc, char ** argv)
 
   // generate all rays from COP (should be run by all processes)
   generateAllRaysFromCOP();
-
-  // MPI initialization
-  MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &myId);
-  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
   if(myId == 0)
   {
