@@ -632,13 +632,16 @@ void processScene_manager()
         int rowOffset = i * rowsPerBlock;
         for(int a = 0; a < scaledImageWidth; a++)
         {
-            for(int b = rowOffset; b < rowOffset + rowsPerBlock; b++)
+            for(int b = 0; b < rowsPerBlock; b++)
             {
-                int row = b + rowOffset;
-                int index = 3 * (row * scaledImageWidth + a);
-                superScaledAllPixels[a][b][0] = recvPixels[index];
-                superScaledAllPixels[a][b][1] = recvPixels[index + 1];
-                superScaledAllPixels[a][b][2] = recvPixels[index + 2];
+                if(b >= rowOffset && b < rowOffset + rowsPerBlock)
+                {
+                    int row = b + rowOffset;
+                    int index = 3 * (row * scaledImageWidth + a);
+                    superScaledAllPixels[a][b][0] = recvPixels[index];
+                    superScaledAllPixels[a][b][1] = recvPixels[index + 1];
+                    superScaledAllPixels[a][b][2] = recvPixels[index + 2];
+                }
             }
         }
     }
