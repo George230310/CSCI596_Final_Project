@@ -630,18 +630,20 @@ void processScene_manager()
     {
         MPI_Recv(recvPixels, bufferItemCount, MPI_INT, i, i, MPI_COMM_WORLD, &status);
         int rowOffset = i * rowsPerBlock;
+
+        int index = 0;
         for(int a = 0; a < scaledImageWidth; a++)
         {
             for(int b = 0; b < scaledImageHeight; b++)
             {
                 if(b >= rowOffset && b < rowOffset + rowsPerBlock)
                 {
-                    int row = b + rowOffset;
-                    int index = 3 * (row * scaledImageWidth + a);
                     superScaledAllPixels[a][b][0] = recvPixels[index];
                     superScaledAllPixels[a][b][1] = recvPixels[index + 1];
                     superScaledAllPixels[a][b][2] = recvPixels[index + 2];
                 }
+
+                index += 3;
             }
         }
     }
@@ -693,16 +695,16 @@ void processScene_worker()
     int rowOffset = myId * rowsPerBlock;
     renderBlock(0, rowOffset, scaledImageWidth, rowOffset + rowsPerBlock);
 
+    int index = 0;
     // send the result to manager
     for(int a = 0; a < scaledImageWidth; a++)
     {
         for(int b = 0; b < scaledImageHeight; b++)
         {
-            int row = b + rowOffset;
-            int index = 3 * (row * scaledImageWidth + a);
             sendPixels[index] = superScaledAllPixels[a][b][0];
             sendPixels[index + 1] = superScaledAllPixels[a][b][1];
             sendPixels[index + 2] = superScaledAllPixels[a][b][2];
+            index += 3;
         }
     }
 
