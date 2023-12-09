@@ -606,9 +606,6 @@ void processScene_manager()
 
     startTime = MPI_Wtime();
 
-    // sub-divide light sources
-    SubdivideLightSources();
-
     // process the scene
     MPI_Status status;
     int scaledImageHeight = HEIGHT * SSAA_Coefficient;
@@ -1096,49 +1093,51 @@ int loadScene(char *argv)
 
 int main(int argc, char ** argv)
 {
-  // MPI initialization
-  MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &myId);
-  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+    // MPI initialization
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myId);
+    MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
-  if (argc != 3)
-  {  
-    printf ("Usage: %s <input scenefile> <output pngname>\n", argv[0]);
-    exit(0);
-  }
-
-  filename = argv[2];
-  loadScene(argv[1]);
-
-  // generate all rays from COP (should be run by all processes)
-  generateAllRaysFromCOP();
-
-  if(myId == 0)
-  {
-    // the manager process
-    processScene_manager();
-
-    // plot pixel to the buffer
-    for(unsigned int x=0; x<WIDTH; x++)
-    {
-        for(unsigned int y=0; y<HEIGHT; y++)
-        {
-            plot_pixel(x, y, allPixels[x][y][0], allPixels[x][y][1], allPixels[x][y][2]);
-        }
+    if (argc != 3)
+    {  
+        printf ("Usage: %s <input scenefile> <output pngname>\n", argv[0]);
+        exit(0);
     }
 
-    // save image from the buffer
-    save_png();
-  }
-  else
-  {
-    // the worker processes
-    processScene_worker();
-  }
+    filename = argv[2];
+    loadScene(argv[1]);
 
+    // generate all rays from COP (should be run by all processes)
+    generateAllRaysFromCOP();
 
-  std::cout << "Proc #" << myId << " is done." << std::endl;
-  MPI_Finalize();
-  return 0;
+    // sub-divide light sources
+    SubdivideLightSources();
+
+    if(myId == 0)
+    {
+        // the manager process
+        processScene_manager();
+
+        // plot pixel to the buffer
+        for(unsigned int x=0; x<WIDTH; x++)
+        {
+            for(unsigned int y=0; y<HEIGHT; y++)
+            {
+                plot_pixel(x, y, allPixels[x][y][0], allPixels[x][y][1], allPixels[x][y][2]);
+            }
+        }
+
+        // save image from the buffer
+        save_png();
+    }
+    else
+    {
+        // the worker processes
+        processScene_worker();
+    }
+
+    std::cout << "Proc #" << myId << " is done." << std::endl;
+    MPI_Finalize();
+    return 0;
 }
 
