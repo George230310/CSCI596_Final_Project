@@ -591,7 +591,7 @@ void renderBlock(int startCol, int startRow, int endCol, int endRow)
                 superScaledAllPixels[i][j][2] = 255;
             }
 
-            ++rayIndex;
+            rayIndex = (i + 1 + 1) * (j + 1 + 1) - 1;
         }
     }
 }
