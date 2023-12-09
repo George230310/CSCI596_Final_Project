@@ -632,7 +632,7 @@ void processScene_manager()
         int rowOffset = i * rowsPerBlock;
         for(int a = 0; a < scaledImageWidth; a++)
         {
-            for(int b = 0; b < rowsPerBlock; b++)
+            for(int b = 0; b < scaledImageHeight; b++)
             {
                 if(b >= rowOffset && b < rowOffset + rowsPerBlock)
                 {
@@ -696,7 +696,7 @@ void processScene_worker()
     // send the result to manager
     for(int a = 0; a < scaledImageWidth; a++)
     {
-        for(int b = 0; b < rowsPerBlock; b++)
+        for(int b = 0; b < scaledImageHeight; b++)
         {
             int row = b + rowOffset;
             int index = 3 * (row * scaledImageWidth + a);
