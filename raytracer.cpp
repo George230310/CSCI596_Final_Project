@@ -621,11 +621,11 @@ void processScene_manager()
     // TODO: the manager renders the first strip and any left overs, probably better way to do this
     int rowsPerBlock = scaledImageHeight / nProc;
     int leftOverRows = scaledImageHeight % nProc;
-    renderBlock(0, 0, scaledImageWidth, rowsPerBlock - 1);
+    renderBlock(0, 0, scaledImageWidth, rowsPerBlock);
 
     if(leftOverRows > 0)
     {
-        renderBlock(0, scaledImageHeight - leftOverRows + 1, scaledImageWidth, scaledImageHeight - 1);
+        renderBlock(0, scaledImageHeight - leftOverRows + 2, scaledImageWidth, scaledImageHeight);
     }
 
     // receive from workers
@@ -691,7 +691,7 @@ void processScene_worker()
     // render my part
     int rowsPerBlock = scaledImageHeight / nProc;
     int rowOffset = myId * rowsPerBlock;
-    renderBlock(0, rowOffset, scaledImageWidth, rowOffset + rowsPerBlock - 1);
+    renderBlock(0, rowOffset, scaledImageWidth, rowOffset + rowsPerBlock);
 
     // send the result to manager
     for(int a = 0; a < rowsPerBlock; a++)
