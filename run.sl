@@ -14,6 +14,6 @@ INPUT_FILE="./InputFiles/spheres.scene"
 OUTPUT_FILE="test.png"
 
 # Run the executable
-$EXECUTABLE $INPUT_FILE $OUTPUT_FILE
+mpirun -n $SLURM_NTASKS $EXECUTABLE $INPUT_FILE $OUTPUT_FILE
 
 scp $OUTPUT_FILE leyuxu@discovery.usc.edu:home1/leyuxu/CSCI596_Final_Project

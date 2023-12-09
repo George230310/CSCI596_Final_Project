@@ -1,4 +1,4 @@
-CC = mpic++
+CC = mpicxx
 CFLAGS = -std=c++11 -Ofast -c -I./libs/glm
 LDFLAGS = -lm
 
