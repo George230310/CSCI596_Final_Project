@@ -141,7 +141,7 @@ void generateAllRaysFromCOP()
 
     for (int i = 0; i < WIDTH * SSAA_Coefficient; ++i)
     {
-        for (int j = HEIGHT * SSAA_Coefficient - 1; j >= 0; --j)
+        for (int j = 0; j < HEIGHT * SSAA_Coefficient; ++j)
         {
             glm::vec3 ray = topLeftScreenCorner + (float)i * pixelWidthOffset + (float)j * pixelHeightOffset + pixelWidthOffset / 2.0f + pixelHeightOffset / 2.0f;
             ray = glm::normalize(ray);
