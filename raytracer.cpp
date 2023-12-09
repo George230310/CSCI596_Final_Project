@@ -1133,7 +1133,7 @@ int main(int argc, char ** argv)
   else
   {
     // the worker processes
-    processScene_worker();
+    // processScene_worker();
   }
 
 
