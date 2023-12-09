@@ -1137,7 +1137,7 @@ int main(int argc, char ** argv)
   }
 
 
-  std::cout << "Proc #" + myId + " is done.";
+  std::cout << "Proc #" + myId + " is done." << std::endl;
   MPI_Finalize();
   return 0;
 }
