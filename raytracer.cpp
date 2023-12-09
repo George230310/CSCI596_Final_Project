@@ -630,15 +630,15 @@ void processScene_manager()
     {
         MPI_Recv(recvPixels, bufferItemCount, MPI_INT, i, i, MPI_COMM_WORLD, &status);
         int rowOffset = i * rowsPerBlock;
-        for(int a = 0; a < rowsPerBlock; a++)
+        for(int a = 0; a < scaledImageWidth; a++)
         {
-            for(int b = 0; b < scaledImageWidth; b++)
+            for(int b = 0; b < rowsPerBlock; b++)
             {
-                int row = a + rowOffset;
-                int index = 3 * (row * scaledImageWidth + b);
-                superScaledAllPixels[b][a][0] = recvPixels[index];
-                superScaledAllPixels[b][a][1] = recvPixels[index + 1];
-                superScaledAllPixels[b][a][2] = recvPixels[index + 2];
+                int row = b + rowOffset;
+                int index = 3 * (row * scaledImageWidth + a);
+                superScaledAllPixels[a][b][0] = recvPixels[index];
+                superScaledAllPixels[a][b][1] = recvPixels[index + 1];
+                superScaledAllPixels[a][b][2] = recvPixels[index + 2];
             }
         }
     }
@@ -691,15 +691,15 @@ void processScene_worker()
     renderBlock(0, rowOffset, scaledImageWidth, rowOffset + rowsPerBlock);
 
     // send the result to manager
-    for(int a = 0; a < rowsPerBlock; a++)
+    for(int a = 0; a < scaledImageWidth; a++)
     {
-        for(int b = 0; b < scaledImageWidth; b++)
+        for(int b = 0; b < rowsPerBlock; b++)
         {
-            int row = a + rowOffset;
-            int index = 3 * (row * scaledImageWidth + b);
-            sendPixels[index] = superScaledAllPixels[b][a][0];
-            sendPixels[index + 1] = superScaledAllPixels[b][a][1];
-            sendPixels[index + 2] = superScaledAllPixels[b][a][2];
+            int row = b + rowOffset;
+            int index = 3 * (row * scaledImageWidth + a);
+            sendPixels[index] = superScaledAllPixels[a][b][0];
+            sendPixels[index + 1] = superScaledAllPixels[a][b][1];
+            sendPixels[index + 2] = superScaledAllPixels[a][b][2];
         }
     }
 
