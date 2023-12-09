@@ -455,13 +455,13 @@ void processScene()
 // function to render a rectangular block of the super scaled image from indicated start column & row to end column & row
 void renderBlock(int startCol, int startRow, int endCol, int endRow)
 {
-    int rayIndex = (startCol + 1) * (startRow + 1) - 1;
-
     // go through each pixel
     for (int i = startCol; i < endCol; ++i)
     {
         for (int j = startRow; j < endRow; ++j)
         {
+            int rayIndex = i * HEIGHT * SSAA_Coefficient + j;
+
             // go through all renderables in scene and find the intersection with the smallest t
             IntersectData data;
             IntersectData tempData;
@@ -590,8 +590,6 @@ void renderBlock(int startCol, int startRow, int endCol, int endRow)
                 superScaledAllPixels[i][j][1] = 255;
                 superScaledAllPixels[i][j][2] = 255;
             }
-
-            rayIndex = (i + 1 + 1) * (j + 1 + 1) - 1;
         }
     }
 }
