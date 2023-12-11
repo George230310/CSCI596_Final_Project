@@ -73,6 +73,13 @@ To parallelize our algorithm, we will be experimenting with MPI and OpenMP for i
 another, we will experiment with various patterns of dividing the screen space. We are curious to explore whether different ways of screen divisions will significantly impact the runtime of the algorithm, probably due to 
 cache read and misses. A disadvantage of the above approach is that if the scene is sparse, some threads return early and remain idle while the others have to do a majority of the work.
 To address this, we also want to explore a worker queue model which would have higher overhead but we expect it would do better.
-We will conduct scalability tests on our final product and plot the graphs for examining the efficiency. Lastly, if time permits, we will experiment with GPU ray tracing using CUDA.  
+We will conduct scalability tests on our final product and plot the graphs for examining the efficiency.
 ![Plan](readme_images/CS596_Plan.drawio.png)  
 *One Way of Dividing Screen Space*  
+
+### Results
+#### Using OMP
+We used the omp parallel directive with the collapse modifier allowed us to mark the outer two loops as the ones to be parallelized. This makes the computation for each pixel to be treated as one job. This populates the job pool from which the worker threads fetch jobs to work on. One advantage with this is that every thread works on a different pixel and there is no cross communication of information required between jobs. This enables the worker threads to directly store their result into the main buffer allowing us to skip the expensive copy step without worrying about race-conditions or memory corruption.
+##### Strong-Scaling Tests
+For Strong Scaling, we took a fixed problem-size, a 960x540 pixel render with 10xSSAA, Soft shadows and a Recursive Depth of 3 reflections. We ran it on 2 machines, once on my Laptop with an i7-8750H supporting 12 threads and once on a USC CARC machine with xeon-2640v4 processor supporting 20 threads per node.
+![StrongScalingPlot](readme_images/StrongScalingPlot.png)
