@@ -83,3 +83,5 @@ We used the omp parallel directive with the collapse modifier allowed us to mark
 ##### Strong-Scaling Tests
 For Strong Scaling, we took a fixed problem-size, a 960x540 pixel render with 10xSSAA, Soft shadows and a Recursive Depth of 3 reflections. We ran it on 2 machines, once on my Laptop with an i7-8750H supporting 12 threads and once on a USC CARC machine with xeon-2640v4 processor supporting 20 threads per node.
 ![StrongScalingPlot](readme_images/StrongScalingPlot.png)
+
+We see that the results do follow Gustafson's law and law of depreciating returns. The weaker laptop hardware flattens out at around a 5 times speedup. It is interesting to notice that there is no improvement moving from 32 to 64 threads because the CPU does not have enough physical threads to support that level of parallelism. The CARC node on the other hand does have improved performance for every step in threadcount.
