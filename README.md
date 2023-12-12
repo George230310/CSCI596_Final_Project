@@ -73,6 +73,27 @@ To parallelize our algorithm, we will be experimenting with MPI and OpenMP for i
 another, we will experiment with various patterns of dividing the screen space. We are curious to explore whether different ways of screen divisions will significantly impact the runtime of the algorithm, probably due to 
 cache read and misses. A disadvantage of the above approach is that if the scene is sparse, some threads return early and remain idle while the others have to do a majority of the work.
 To address this, we also want to explore a worker queue model which would have higher overhead but we expect it would do better.
-We will conduct scalability tests on our final product and plot the graphs for examining the efficiency. Lastly, if time permits, we will experiment with GPU ray tracing using CUDA.  
+We will conduct scalability tests on our final product and plot the graphs for examining the efficiency.
 ![Plan](readme_images/CS596_Plan.drawio.png)  
-*One Way of Dividing Screen Space*  
+*Dividing the Screen Space into Horizontal Strips*  
+
+### Results
+#### Using OMP (implemented by Suvi Marathe on suvi-test branch)
+We used the omp parallel directive with the collapse modifier allowed us to mark the outer two loops as the ones to be parallelized. This makes the computation for each pixel to be treated as one job. This populates the job pool from which the worker threads fetch jobs to work on. One advantage with this is that every thread works on a different pixel and there is no cross communication of information required between jobs. This enables the worker threads to directly store their result into the main buffer allowing us to skip the expensive copy step without worrying about race-conditions or memory corruption.
+##### Strong-Scaling Tests
+For Strong Scaling, we took a fixed problem-size, a 960x540 pixel render with 10xSSAA, Soft shadows and a Recursive Depth of 3 reflections. We ran it on 2 machines, once on my Laptop with an i7-8750H supporting 12 threads and once on a USC CARC machine with xeon-2640v4 processor supporting 20 threads per node.
+![StrongScalingPlot](readme_images/StrongScalingPlot.png)  
+
+We see that the results do follow Gustafson's law and law of depreciating returns. The weaker laptop hardware flattens out at around a 5 times speedup. It is interesting to notice that there is no improvement moving from 32 to 64 threads because the CPU does not have enough physical threads to support that level of parallelism. The CARC node on the other hand does have improved performance for every step in threadcount.
+
+#### Using MPI (implemented by Leyu Xu on leyu-test branch)
+We also used MPI as learned in class to run parallel CPU ray tracing with CARC's computing nodes. In particular, we divided the screen space into horizontal strips and had each processor process one strip. Among all the running processes, one of them is designated as the manager process that will be responsible of receiving results from other processes and outputing the final image, while the rest will only serve as worker processes that fill out and send their assigned strips. The main MPI commands used in the implementation are MPI_Recv and MPI_Send.  
+##### Strong-Scaling Tests
+The strong scaling test is conducted on USC CARC's computing node with xeon-2640v4 processors. The image rendered was of size 640x480 pixels, with 10x SSAA, soft shadow off and recursive reflections off. The resulting plot is shown below:  
+![MPI Strong Scaling Plot](readme_images/MPIStrongScaling.png)  
+
+Similar to the scalability test with multi-threading, the efficiency gradually decreases as the number of processors increases. Interestingly, the efficiency actually increases as the number of processors jumps from 4 to 8. We suspect that this is due to other jobs on CARC running at the same time as ours or caching changes with 8 processors.  
+
+### Contributions
+**Suvi Marathe:** ray tracing code, object-oriented designs, image I/O, OpenMP implementation and testings, readme write-up  
+**Leyu Xu:** ray-object intersection algorithms, MPI implementation and testings, image I/O, readme write-up
