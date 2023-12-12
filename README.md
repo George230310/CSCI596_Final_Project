@@ -95,5 +95,5 @@ The strong scaling test is conducted on USC CARC's computing node with xeon-2640
 Similar to the scalability test with multi-threading, the efficiency gradually decreases as the number of processors increases. Interestingly, the efficiency actually increases as the number of processors jumps from 4 to 8. We suspect that this is due to other jobs on CARC running at the same time as ours or caching changes with 8 processors.  
 
 ### Contributions
-#### Suvi Marathe: ray tracing code, object-oriented designs, image I/O, OpenMP implementation and testings, readme write-up
-#### Leyu Xu: ray-object intersection algorithms, MPI implementation and testings, image I/O, readme write-up
+**Suvi Marathe:** ray tracing code, object-oriented designs, image I/O, OpenMP implementation and testings, readme write-up  
+**Leyu Xu:** ray-object intersection algorithms, MPI implementation and testings, image I/O, readme write-up
