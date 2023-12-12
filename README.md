@@ -83,8 +83,15 @@ We used the omp parallel directive with the collapse modifier allowed us to mark
 ##### Strong-Scaling Tests
 For Strong Scaling, we took a fixed problem-size, a 960x540 pixel render with 10xSSAA, Soft shadows and a Recursive Depth of 3 reflections. We ran it on 2 machines, once on my Laptop with an i7-8750H supporting 12 threads and once on a USC CARC machine with xeon-2640v4 processor supporting 20 threads per node.
 ![StrongScalingPlot](readme_images/StrongScalingPlot.png)  
+*Observed Strong-Scaling performance on laptop as well as compute server hardware*  
 
 We see that the results do follow Gustafson's law and law of depreciating returns. The weaker laptop hardware flattens out at around a 5 times speedup. It is interesting to notice that there is no improvement moving from 32 to 64 threads because the CPU does not have enough physical threads to support that level of parallelism. The CARC node on the other hand does have improved performance for every step in threadcount.
+
+##### Weak-Scaling Tests
+For weak scaling, we increase the problem size proportional to the increase in threads so the theoretical workload per thread remains constant. This was interesting to analyse because there are a number of ways the problem size could be increased for a raytracer. We could increase the image size so that we get a higher resolution picture of the same scene, we could increase the sampling of our Anti-Aliasing so that we decrease artifacts or we could even increase the recursive Reflection depth, which controls how many times each light ray is allowed to bounce off surfaces.
+
+We tested Image scaling first and got pretty expected results, with multithreading giving about 80% of ideal performance upto 8 times scaling and then dropping off.
+![WeakScalingImageSizePlot](readme_images/WeakScalingImageSize.png)  
 
 #### Using MPI (implemented by Leyu Xu on leyu-test branch)
 We also used MPI as learned in class to run parallel CPU ray tracing with CARC's computing nodes. In particular, we divided the screen space into horizontal strips and had each processor process one strip. Among all the running processes, one of them is designated as the manager process that will be responsible of receiving results from other processes and outputing the final image, while the rest will only serve as worker processes that fill out and send their assigned strips. The main MPI commands used in the implementation are MPI_Recv and MPI_Send.  
