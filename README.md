@@ -88,7 +88,7 @@ We see that the results do follow Gustafson's law and law of depreciating return
 
 #### Using MPI (implemented by Leyu Xu on leyu-test branch)
 We also used MPI as learned in class to run parallel CPU ray tracing with CARC's computing nodes. In particular, we divided the screen space into horizontal strips and had each processor process one strip. Among all the running processes, one of them is designated as the manager process that will be responsible of receiving results from other processes and outputing the final image, while the rest will only serve as worker processes that fill out and send their assigned strips. The main MPI commands used in the implementation are MPI_Recv and MPI_Send.  
-#### Strong-Scaling Tests
+##### Strong-Scaling Tests
 The strong scaling test is conducted on USC CARC's computing node with xeon-2640v4 processors. The image rendered was of size 640x480 pixels, with 10x SSAA, soft shadow off and recursive reflections off. The resulting plot is shown below:  
 ![MPI Strong Scaling Plot](readme_images/MPIStrongScaling.png)  
 
