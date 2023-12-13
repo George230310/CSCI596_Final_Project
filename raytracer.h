@@ -68,5 +68,6 @@ inline bool isNearlyZero(float val)
     return abs(val) < eps;
 }
 
-#define SSAAA_RANDOM 1
+#define SSAA_RANDOM 0
+#define PRINT_INPUT 0
 #endif //RAYTRACER_HEADER
